@@ -1,9 +1,9 @@
 ---
-name: llm-explainer
+name: explain
 description: Explain something in the format that is fastest to understand, from controlled English (ASD-STE100 style), to a diagram, to an interactive HTML page, to a narrated explainer video. Check facts against their sources before writing. Use when the user wants to understand a substantial concept, algorithm, code change, pull request, paper, benchmark result, or agent output, or asks for an explainer, diagram, HTML explanation, STE, or video. Not for one-line answers, drafting a pull request description, or code review.
 ---
 
-# LLM explainer
+# LLM output explainer
 
 Make a subject easy to understand, and make sure every statement in the explanation is true.
 

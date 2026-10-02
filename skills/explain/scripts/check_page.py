@@ -7,7 +7,7 @@ By default, check an HTML fragment for an Artifact host. With --standalone,
 check a complete HTML document that can be opened directly in a browser.
 FAIL lines break the page or its delivery contract and must be fixed.
 WARN lines are likely problems worth a look. Exit status is 1 if any FAIL.
-The JavaScript check installs esprima into ~/.cache/llm-explainer/pylib on
+The JavaScript check installs esprima into ~/.cache/llm-output-explainer/pylib on
 first use, so it works without node.
 """
 import os
@@ -23,7 +23,7 @@ ALLOWED_SCRIPT_HOSTS = (
     "https://code.jquery.com/",
 )
 ALLOWED_STYLE_HOST = "https://fonts.googleapis.com/"
-PYLIB = os.path.expanduser("~/.cache/llm-explainer/pylib")
+PYLIB = os.path.expanduser("~/.cache/llm-output-explainer/pylib")
 
 fails, warns = [], []
 

@@ -1,5 +1,5 @@
 {
-  "name": "llm-explainer",
+  "name": "llm-output-explainer",
   "owner": {
     "name": "JohnQinAMD",
     "url": "https://github.com/JohnQinAMD"
@@ -7,7 +7,7 @@
   "description": "Explanations that are easy to read and checked against their sources.",
   "plugins": [
     {
-      "name": "llm-explainer",
+      "name": "llm-output-explainer",
       "source": "./",
       "description": "Explain code, papers, PRs and results in the format that is fastest to understand: controlled English (ASD-STE100 style), diagrams, interactive HTML pages, or narrated videos, with every claim checked against its source."
     }

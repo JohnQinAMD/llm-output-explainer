@@ -1,4 +1,4 @@
-# llm-explainer
+# llm-output-explainer
 
 A Codex and Claude Code skill that explains code, papers, pull requests and results in the format that is fastest to understand. It checks every claim against its source before it writes anything.
 
@@ -28,24 +28,24 @@ The skill picks a format from the request. If you name one ("explain in STE", "m
 In Codex:
 
 ```
-codex plugin marketplace add JohnQinAMD/llm-explainer
-codex plugin add llm-explainer@llm-explainer
+codex plugin marketplace add JohnQinAMD/llm-output-explainer
+codex plugin add llm-output-explainer@llm-output-explainer
 ```
 
-Start a new Codex conversation after installation. To install only the skill, copy `skills/llm-explainer/` to `~/.codex/skills/llm-explainer/`.
+Start a new Codex conversation after installation. To install only the skill, copy `skills/explain/` to `~/.codex/skills/explain/`.
 
 In Claude Code:
 
 ```
-claude plugin marketplace add JohnQinAMD/llm-explainer
-claude plugin install llm-explainer@llm-explainer
+claude plugin marketplace add JohnQinAMD/llm-output-explainer
+claude plugin install llm-output-explainer@llm-output-explainer
 ```
 
-Or copy `skills/llm-explainer/` to `~/.claude/skills/llm-explainer/`.
+Or copy `skills/explain/` to `~/.claude/skills/explain/`.
 
 ## Use
 
-Ask in plain words. The skill loads when the request fits:
+Ask in plain words. The skill loads when the request fits. To call it directly, use `/llm-output-explainer:explain` (plugin) or `/explain` (copied skill).
 
 ```
 explain in STE how the scheduler picks which requests run in a step
@@ -56,7 +56,7 @@ summarize PR 1234 in vllm-project/vllm for the reviewers
 ## Files
 
 ```
-skills/llm-explainer/
+skills/explain/
 ├── SKILL.md                    the workflow: format, fact check, reader, delivery
 ├── references/ste-writing.md   ASD-STE100 Issue 9 rules and dictionary notes
 ├── references/html-page.md     page workflow, figure rules, page sections
@@ -72,7 +72,7 @@ skills/llm-explainer/
 
 ## Requirements
 
-- Python 3 for the scripts. `check_page.py` installs `esprima` into `~/.cache/llm-explainer/` the first time it parses JavaScript.
+- Python 3 for the scripts. `check_page.py` installs `esprima` into `~/.cache/llm-output-explainer/` the first time it parses JavaScript.
 - `curl` for `pr_facts.sh`. To raise the GitHub API rate limit, set `GH_TOKEN_FILE` to a file that holds a token.
 - Optional: Docker, for a headless browser check or for video (`manimcommunity/manim`).
 
