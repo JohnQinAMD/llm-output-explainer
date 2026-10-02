@@ -1,6 +1,6 @@
 ---
 name: llm-explainer
-description: Explain something in the format that is fastest to understand, from plain controlled English (ASD-STE100 style), to a diagram, to an interactive HTML page published as a private claude.ai Artifact, to a narrated explainer video. The facts are checked against sources before anything is written. Use this when the user wants to understand something substantial, such as a concept, a kernel or algorithm, code, a PR or commit stack, a paper, benchmark results, or an agent's output. Also use it when they ask for an "explainer", a diagram, "make it HTML", "explain in STE", or a video, even without naming a format. Not for one-line answers, drafting a PR's own description, or code review.
+description: Explain something in the format that is fastest to understand, from controlled English (ASD-STE100 style), to a diagram, to an interactive HTML page, to a narrated explainer video. Check facts against their sources before writing. Use when the user wants to understand a substantial concept, algorithm, code change, pull request, paper, benchmark result, or agent output, or asks for an explainer, diagram, HTML explanation, STE, or video. Not for one-line answers, drafting a pull request description, or code review.
 ---
 
 # LLM explainer
@@ -13,7 +13,7 @@ Make a subject easy to understand, and make sure every statement in the explanat
 |---|---|---|
 | **Controlled English** (80% ASD-STE100) | answers, summaries, procedures; the default in chat | the reply |
 | **Diagram** | the point is a structure: data flow, before/after, states | a one-figure page |
-| **Interactive HTML page** | several parts, numbers, a mechanism worth playing with; something to share | a private Artifact |
+| **Interactive HTML page** | several parts, numbers, a mechanism worth playing with; something to share | a private Artifact when available, otherwise a standalone .html file |
 | **Video** | only when asked: intuition that unfolds over time | an .mp4 |
 
 If the user names a format, use it. In chat, answer in controlled English. When a richer format would clearly help, offer it in one line.
@@ -48,7 +48,7 @@ A new reader needs a new outline; changing the wording is not enough. To meet a 
 ## 4. Produce
 
 - **Controlled English:** `references/ste-writing.md` (Issue 9 rules). `scripts/ste_lint.py [--strict] file` flags common breaks.
-- **Diagram or page:** `references/html-page.md`. Start from `assets/skeleton.html`, check with `scripts/check_page.py`, then publish with the Artifact tool.
+- **Diagram or page:** read `references/html-page.md`. Start from `assets/skeleton.html`, check with `scripts/check_page.py`, then publish as an Artifact or deliver a standalone file, according to the tools available.
 - **Video:** `references/video.md`.
 
 ## 5. Deliver
@@ -63,5 +63,5 @@ Then:
 - If the reader is someone else, start with one line: "Written for: …".
 - Give the link or file, and a short list of what it shows.
 - Name any claim you corrected while checking, especially one from the user's own notes.
-- Artifacts are private. Other readers can't open one until the user shares it.
+- If you publish an Artifact, say that it is private until the user shares it. If you create a standalone file, give its path.
 - Update memory when you learned something durable, such as a PR merging or a baseline fact that was wrong.

@@ -1,6 +1,6 @@
 # llm-explainer
 
-A Claude Code skill that explains code, papers, pull requests and results in the format that is fastest to understand. It checks every claim against its source before it writes anything.
+A Codex and Claude Code skill that explains code, papers, pull requests and results in the format that is fastest to understand. It checks every claim against its source before it writes anything.
 
 The idea comes from [Andrej Karpathy's post](https://x.com/karpathy/status/2105819303471976479). People spend more and more time reading what language models produce. Writing in a controlled language, drawing diagrams, building interactive pages, and making explainer videos can make that output easier to understand.
 
@@ -10,7 +10,7 @@ The idea comes from [Andrej Karpathy's post](https://x.com/karpathy/status/21058
 |---|---|---|
 | Controlled English, 80% [ASD-STE100](https://www.asd-ste100.org/) | answers, summaries, procedures (the default in chat) | the reply |
 | Diagram | the point is a structure: data flow, before and after, states | a page with one figure |
-| Interactive HTML page | several parts, numbers, or a mechanism to play with | a private claude.ai Artifact |
+| Interactive HTML page | several parts, numbers, or a mechanism to play with | a private Artifact or a standalone .html file |
 | Narrated video | only on request: an idea that unfolds over time | an .mp4 |
 
 The skill picks a format from the request. If you name one ("explain in STE", "make it HTML"), it uses that format.
@@ -24,6 +24,15 @@ The skill picks a format from the request. If you name one ("explain in STE", "m
 - **Written for a reader.** The skill writes differently for you, for a peer reviewer, or for a manager, and it can apply your own rules for each audience.
 
 ## Install
+
+In Codex:
+
+```
+codex plugin marketplace add JohnQinAMD/llm-explainer
+codex plugin add llm-explainer@llm-explainer
+```
+
+Start a new Codex conversation after installation. To install only the skill, copy `skills/llm-explainer/` to `~/.codex/skills/llm-explainer/`.
 
 In Claude Code:
 
@@ -54,7 +63,7 @@ skills/llm-explainer/
 ├── references/video.md         narrated video steps
 ├── assets/skeleton.html        starter page: themes, figures, self-check
 └── scripts/
-    ├── check_page.py           checks a page before publishing
+    ├── check_page.py           checks an Artifact fragment or standalone page
     ├── ste_lint.py             flags STE rule breaks
     └── pr_facts.sh             live state of a GitHub pull request
 ```

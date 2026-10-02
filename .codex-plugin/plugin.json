@@ -1,0 +1,39 @@
+{
+  "name": "llm-explainer",
+  "version": "0.2.0",
+  "description": "Explain code, papers, PRs and results in the format that is fastest to understand, with every claim checked against its source.",
+  "author": {
+    "name": "JohnQinAMD",
+    "url": "https://github.com/JohnQinAMD"
+  },
+  "homepage": "https://github.com/JohnQinAMD/llm-explainer",
+  "repository": "https://github.com/JohnQinAMD/llm-explainer",
+  "license": "MIT",
+  "keywords": [
+    "explainer",
+    "ste100",
+    "simplified-technical-english",
+    "diagrams",
+    "html",
+    "fact-checking"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "LLM Explainer",
+    "shortDescription": "Source-checked technical explanations",
+    "longDescription": "Explain code, papers, pull requests, and results with controlled English, diagrams, interactive HTML, or narrated video.",
+    "developerName": "JohnQinAMD",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Interactive"
+    ],
+    "websiteURL": "https://github.com/JohnQinAMD/llm-explainer",
+    "defaultPrompt": [
+      "Explain this code in controlled English.",
+      "Make an interactive HTML explainer for this algorithm.",
+      "Summarize this pull request for reviewers."
+    ]
+  }
+}

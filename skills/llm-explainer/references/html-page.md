@@ -1,14 +1,14 @@
 # Diagrams and interactive pages
 
-A page is one HTML file, published as a private claude.ai Artifact. A diagram is a short page with one figure, a two-sentence intro and a caption.
+A page is one HTML file. Publish it as a private Artifact when an Artifact tool is available. Otherwise, write a standalone HTML file and give the user its path. A diagram is a short page with one figure, a two-sentence intro and a caption.
 
 ## Workflow
 
-1. **Load guidance:** call `Artifact` with `action: "quickstart"` and `intent: "other"`, and follow its page contract. Load `artifact-diagramming` before drawing SVG and `dataviz` before charts.
-2. **Start the file:** copy `assets/skeleton.html` to a scratch or work directory with free space, as `<short-name>.html`. It has the light and dark theme tokens, SVG classes, a tooltip, a bar-chart helper, the verification strip, linked terms and the self-check. Choose a palette and fonts for this subject.
+1. **Choose delivery:** if an Artifact tool is available, load its page guidance and use its required document format. Load any available diagramming guidance before drawing SVG and data-visualization guidance before charts. If no Artifact tool is available, make a standalone HTML document in the user's workspace.
+2. **Start the file:** copy `assets/skeleton.html` to a scratch or work directory with free space, as `<short-name>.html`. It has the light and dark theme tokens, SVG classes, a tooltip, a bar-chart helper, the verification strip, linked terms and the self-check. Choose a palette and fonts for this subject. For a standalone file, add `<!doctype html>`, `<html lang="en">`, `<head>`, and `<body>` around the fragment; keep the title, links, and styles in the head and the visible page plus scripts in the body.
 3. **Title:** use the name of the thing ("Online Softmax"), not "X explainer".
-4. **Check:** run `python3 scripts/check_page.py <page.html>`. Fix every FAIL.
-5. **Publish** with `icon` and a one-sentence `description`. To update, publish the same path again; the URL stays the same.
+4. **Check:** for an Artifact fragment, run `python3 scripts/check_page.py <page.html>`. For a standalone document, add `--standalone`. Fix every FAIL.
+5. **Deliver:** publish through the Artifact tool when available. Otherwise, keep the standalone file in the workspace and give the user a clickable file link or path. Do not claim that a local file was published.
 
 ## Figures
 

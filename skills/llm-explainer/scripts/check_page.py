@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Static checks for an Artifact explainer page before publishing.
+"""Static checks for an explainer page.
 
-Usage: check_page.py <page.html>
+Usage: check_page.py [--standalone] <page.html>
 
-FAIL lines break the page or the Artifact contract and must be fixed.
+By default, check an HTML fragment for an Artifact host. With --standalone,
+check a complete HTML document that can be opened directly in a browser.
+FAIL lines break the page or its delivery contract and must be fixed.
 WARN lines are likely problems worth a look. Exit status is 1 if any FAIL.
 The JavaScript check installs esprima into ~/.cache/llm-explainer/pylib on
 first use, so it works without node.
@@ -60,7 +62,7 @@ def load_esprima():
         return None
 
 
-def main(path):
+def main(path, standalone=False):
     html = open(path, encoding="utf-8").read()
     size = len(html.encode("utf-8"))
     if size > 16 * 1024 * 1024:
@@ -78,10 +80,21 @@ def main(path):
         if words > 6:
             warn(f'title "{title}" has {words} words; aim for 2 to 4')
 
-    # The publish step wraps the page in its own document skeleton.
-    for tag in ("<!doctype", "<html", "<head>", "<body"):
-        if tag in html.lower():
-            fail(f"page contains {tag}; the Artifact skeleton adds it, so remove it")
+    # Artifact hosts add the document shell. Local files need their own shell.
+    shell_tags = {
+        "<!doctype html>": r"<!doctype\s+html(?:\s[^>]*)?>",
+        "<html>": r"<html(?:\s[^>]*)?>",
+        "<head>": r"<head(?:\s[^>]*)?>",
+        "<body>": r"<body(?:\s[^>]*)?>",
+    }
+    if standalone:
+        for tag, pattern in shell_tags.items():
+            if not re.search(pattern, html, re.I):
+                fail(f"standalone page has no {tag}")
+    else:
+        for tag, pattern in shell_tags.items():
+            if re.search(pattern, html, re.I):
+                fail(f"page contains {tag}; the Artifact skeleton adds it, so remove it")
 
     # CDN allowlist.
     for src in re.findall(r"<script[^>]*\bsrc=\"([^\"]+)\"", html, re.I):
@@ -151,7 +164,12 @@ def main(path):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    args = sys.argv[1:]
+    standalone = False
+    if "--standalone" in args:
+        standalone = True
+        args.remove("--standalone")
+    if len(args) != 1:
         print(__doc__)
         sys.exit(2)
-    sys.exit(main(sys.argv[1]))
+    sys.exit(main(args[0], standalone=standalone))
