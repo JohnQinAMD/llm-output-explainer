@@ -1,0 +1,20 @@
+{
+  "name": "llm-explainer",
+  "version": "0.1.0",
+  "description": "Explain code, papers, PRs and results in the format that is fastest to understand: controlled English (ASD-STE100 style), diagrams, interactive HTML pages, or narrated videos, with every claim checked against its source.",
+  "author": {
+    "name": "JohnQinAMD",
+    "url": "https://github.com/JohnQinAMD"
+  },
+  "homepage": "https://github.com/JohnQinAMD/llm-explainer",
+  "repository": "https://github.com/JohnQinAMD/llm-explainer",
+  "license": "MIT",
+  "keywords": [
+    "explainer",
+    "ste100",
+    "simplified-technical-english",
+    "diagrams",
+    "html",
+    "fact-checking"
+  ]
+}

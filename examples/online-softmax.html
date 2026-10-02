@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Online Softmax</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Schibsted+Grotesk:wght@500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+/* Layout: one 68ch reading column on cool drafting-paper ground; figures and the simulator widen to 1080px; every number is set in mono so values line up. */
+/* Color jobs: cobalt = what has been read (running state), ochre = the rescale. Pair checked with the dataviz validator in both themes. */
+:root {
+  --bg: #EEF1F5; --panel: #FBFCFE; --ink: #141A26; --ink-2: #444E60; --muted: #667085;
+  --line: #D8DEE8; --line-strong: #B8C1CF;
+  --accent: #2F62C9; --accent-ink: #234DA3; --accent-wash: #E4EBFA;
+  --hot: #C9822B; --hot-ink: #8A5212; --hot-wash: #FAEFDF;
+  --mark-neutral: #A9B2C0; --code-bg: #E5E9F0; --band: #F1F3F7;
+  --font-display: "Schibsted Grotesk", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1219; --panel: #151A22; --ink: #E6EAF2; --ink-2: #AAB3C3; --muted: #8791A3;
+    --line: #252C38; --line-strong: #3A4352;
+    --accent: #5A86E6; --accent-ink: #A3BDF6; --accent-wash: #1A2540;
+    --hot: #BB7A2E; --hot-ink: #E6B275; --hot-wash: #2E2315;
+    --mark-neutral: #566072; --code-bg: #1D232D; --band: #191F28;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1219; --panel: #151A22; --ink: #E6EAF2; --ink-2: #AAB3C3; --muted: #8791A3;
+  --line: #252C38; --line-strong: #3A4352;
+  --accent: #5A86E6; --accent-ink: #A3BDF6; --accent-wash: #1A2540;
+  --hot: #BB7A2E; --hot-ink: #E6B275; --hot-wash: #2E2315;
+  --mark-neutral: #566072; --code-bg: #1D232D; --band: #191F28;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 17.5px/1.62 var(--font-body); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 72px; }
+.prose { max-width: 68ch; }
+a { color: var(--accent-ink); text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--font-mono); font-size: 0.84em; }
+code { background: var(--code-bg); padding: 0.08em 0.36em; border-radius: 4px; overflow-wrap: anywhere; }
+var { font-family: var(--font-body); font-style: italic; }
+sub, sup { line-height: 0; }
+.nw { white-space: nowrap; }
+.eyebrow { font: 500 12px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; overflow-wrap: anywhere; }
+h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(36px, 6vw, 60px); line-height: 1.02; letter-spacing: -0.015em; margin: 0 0 20px; text-wrap: balance; max-width: 18ch; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 3.6vw, 34px); line-height: 1.08; letter-spacing: -0.01em; margin: 0 0 16px; text-wrap: balance; }
+h3 { font: 700 19px/1.3 var(--font-display); margin: 34px 0 10px; }
+p { margin: 0 0 14px; }
+.lede { font-size: 19.5px; line-height: 1.55; }
+section { border-top: 1px solid var(--line); padding-block: 52px 8px; margin-top: 48px; }
+figure { margin: 24px 0 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; position: relative; min-width: 0; }
+figcaption { font-size: 15px; line-height: 1.55; color: var(--ink-2); margin-top: 14px; max-width: 78ch; }
+.scroll { overflow-x: auto; }
+.scroll > svg { display: block; width: 100%; height: auto; }
+.scroll > svg.wide { min-width: 860px; }
+.scroll > svg.mid { min-width: 600px; }
+
+/* key facts: a ruled strip, not tiles */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px 26px; margin: 30px 0 0; }
+.fact { border-top: 2px solid var(--ink); padding-top: 10px; min-width: 0; margin: 0; }
+.fact dt { font: 800 25px/1.15 var(--font-display); font-variant-numeric: tabular-nums; }
+.fact dd { margin: 4px 0 0; font-size: 15.5px; line-height: 1.45; }
+.fact dd.cond { font: 400 12px/1.5 var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+
+/* equations */
+.eq { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 18px 0; overflow-x: auto; font-size: 18.5px; line-height: 2.05; }
+.eq div { white-space: nowrap; }
+.src { font: 400 12.5px/1.5 var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+
+/* SVG vocabulary: text and shapes take color from tokens only. */
+.sv-title { font: 700 13px var(--font-display); fill: var(--ink); }
+.sv-mono { font: 600 12.5px var(--font-mono); fill: var(--ink); }
+.sv-sub { font: 400 11.5px var(--font-body); fill: var(--ink-2); }
+.sv-lab { font: 400 11px var(--font-mono); fill: var(--muted); }
+.sv-head { font: 500 11px var(--font-mono); fill: var(--muted); letter-spacing: 0.06em; }
+.sv-hot { fill: var(--hot-ink); font-weight: 600; }
+.sb { font-size: 10.5px; }
+.bx { fill: var(--bg); stroke: var(--line-strong); }
+.bx-new { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 1.2; }
+.bx-store { fill: var(--code-bg); stroke: var(--line-strong); }
+.bx-bad { fill: var(--hot-wash); stroke: var(--hot); stroke-width: 1.2; }
+.bx-ghost { fill: none; stroke: var(--line-strong); stroke-dasharray: 4 3; }
+.region { fill: none; stroke: var(--line-strong); stroke-dasharray: 5 4; }
+.ln { stroke: var(--ink-2); stroke-width: 1.4; fill: none; }
+.mk { fill: var(--ink-2); }
+.grid { stroke: var(--line); stroke-width: 1; }
+.axis { stroke: var(--line-strong); stroke-width: 1; }
+.band-a { fill: var(--panel); } .band-b { fill: var(--band); } .band-now { fill: var(--accent-wash); }
+.dot-read { fill: var(--accent); stroke: var(--panel); stroke-width: 2; }
+.dot-unread { fill: var(--panel); stroke: var(--mark-neutral); stroke-width: 1.5; }
+.bar-read { fill: var(--accent); }
+.ghost { fill: none; stroke: var(--hot); stroke-width: 1.4; stroke-dasharray: 3 2; }
+.ln-max { stroke: var(--hot); stroke-width: 1.6; stroke-dasharray: 6 4; fill: none; }
+
+/* tables, legends, tooltip */
+.tbl-wrap { overflow-x: auto; margin: 14px 0 6px; }
+table.tbl { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+.tbl th, .tbl td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; vertical-align: top; }
+.tbl th { font: 500 12px var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.tbl th var, .tbl th .nt { text-transform: none; letter-spacing: 0; font-size: 14px; }
+.tbl td.num, .tbl th.num { text-align: right; }
+.tbl td .mono, .tbl td.mono { font-size: 13.5px; }
+.tbl tr.now td { background: var(--accent-wash); }
+.tbl tr.later td { color: var(--muted); }
+.tbl tr.check td { border-top: 2px solid var(--line-strong); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--ink-2); margin: 0 0 10px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; vertical-align: -1px; margin-right: 6px; }
+.sw.dot { border-radius: 50%; background: var(--accent); }
+.sw.ring { border-radius: 50%; border: 1.5px solid var(--mark-neutral); background: var(--panel); }
+.sw.max { height: 0; border-top: 2px dashed var(--hot); border-radius: 0; width: 18px; vertical-align: 3px; }
+.sw.ghostk { border: 1.5px dashed var(--hot); background: transparent; border-radius: 2px; }
+.sw.now { background: var(--accent-wash); border: 1px solid var(--line-strong); }
+.tip { position: absolute; z-index: 5; pointer-events: none; background: var(--ink); color: var(--panel); font: 500 13px/1.45 var(--font-body); padding: 7px 10px; border-radius: 6px; max-width: 260px; }
+
+/* simulator controls */
+.controls { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: flex-end; margin: 22px 0 14px; }
+.ctl { display: flex; flex-direction: column; gap: 4px; font: 500 12.5px/1.3 var(--font-mono); color: var(--muted); min-width: 0; }
+.ctl.chk { flex-direction: row; align-items: center; gap: 8px; color: var(--ink-2); padding-bottom: 7px; }
+select, button { font: 500 14px var(--font-mono); color: var(--ink); background: var(--panel); border: 1px solid var(--line-strong); border-radius: 6px; padding: 6px 10px; }
+button { cursor: pointer; }
+button:hover, select:hover { border-color: var(--accent); }
+input[type="checkbox"], input[type="range"] { accent-color: var(--accent); }
+.seed { color: var(--muted); padding-bottom: 8px; }
+.stepper { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin: 0 0 6px; }
+.stepper input[type="range"] { flex: 1 1 180px; min-width: 0; }
+.badge { display: inline-block; font: 600 11px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--hot-ink); border: 1px solid var(--hot); border-radius: 99px; padding: 2px 9px; vertical-align: 3px; }
+.steptext { min-height: 3.4em; margin: 14px 0 0; }
+.result { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 10px; }
+.result > li { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-size: 16px; min-width: 0; overflow-wrap: anywhere; }
+.result .mono { font-size: 14px; }
+
+/* verification strip: the claim ledger's counts */
+.verify { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin: 26px 0 0; font: 500 13px var(--font-mono); }
+.chip { display: inline-flex; gap: 6px; align-items: center; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line-strong); background: var(--panel); font-variant-numeric: tabular-nums; }
+.chip b { font-weight: 600; }
+.chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--mark-neutral); }
+.chip.ok::before { background: var(--accent); } .chip.fix::before { background: var(--hot); }
+.verify details { flex-basis: 100%; font: 400 15px/1.55 var(--font-body); color: var(--ink-2); }
+.verify summary { cursor: pointer; color: var(--accent-ink); font: 500 13px var(--font-mono); }
+.verify ul { padding-left: 20px; max-width: 78ch; }
+.verify li { margin: 8px 0; }
+/* linked terms: prose <span data-ref> <-> svg <g data-ref> */
+span[data-ref] { border-bottom: 1px dotted var(--accent); cursor: default; }
+span[data-ref].ref-on { background: var(--accent-wash); border-radius: 3px; }
+svg g.ref-on > rect, svg rect.ref-on { stroke: var(--accent); stroke-width: 2.4; }
+footer { border-top: 1px solid var(--line); margin-top: 56px; padding-top: 22px; font-size: 15px; color: var(--ink-2); }
+/* self-check overlay, shown only with #selfcheck in the URL */
+.sc-bad { outline: 2px dashed var(--hot) !important; outline-offset: 1px; }
+svg text.sc-bad { fill: var(--hot) !important; }
+.sc-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px)); font: 500 13px var(--font-mono); background: var(--ink); color: var(--panel); }
+@media (max-width: 640px) { body { font-size: 16.5px; } .lede { font-size: 18px; } .wrap { padding-inline: 16px; } figure { padding: 14px; } .eq { font-size: 16.5px; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Attention kernels · Milakov &amp; Gimelshein 2018 · FlashAttention 2022</p>
+    <h1>Carry the max, rescale the sum</h1>
+    <p class="prose lede">Safe softmax reads a row of scores three times: once for the maximum, once for the sum, and once for the outputs. <b>Online softmax</b> gets the maximum <var>m</var> and the sum <var>ℓ</var> in one read. Each time a new block raises <var>m</var>, it multiplies the old <var>ℓ</var> by <span class="nw">e<sup><var>m</var><sub>old</sub> − <var>m</var><sub>new</sub></sup></span>. FlashAttention applies the same factor to its partial output. Thus it reads each block of keys and values once and still computes exact attention.</p>
+
+    <dl class="facts">
+      <div class="fact"><dt>2 numbers</dt><dd>of running state per row: the max <var>m</var> and the sum <var>ℓ</var></dd><dd class="cond">FlashAttention Alg. 1 line 2 · O(N) extra memory, Thm. 1</dd></div>
+      <div class="fact"><dt>4 → 3</dt><dd>memory accesses per element, safe → online softmax</dd><dd class="cond">standalone softmax · Milakov &amp; Gimelshein §2–3</dd></div>
+      <div class="fact"><dt>up to 1.3×</dt><dd>faster softmax kernel</dd><dd class="cond">Tesla V100, fp32, 4,000 rows of length ≥ 4,000 · Milakov &amp; Gimelshein §5.1</dd></div>
+      <div class="fact"><dt>40.3 → 4.4 GB</dt><dd>attention reads and writes to GPU main memory (HBM)</dd><dd class="cond">FlashAttention as a whole · GPT-2 medium, seq. 1024, fwd + bwd, A100 · Fig. 2</dd></div>
+    </dl>
+
+    <div class="verify" aria-label="What was checked">
+      <span class="chip ok"><b>45</b> verified</span>
+      <span class="chip fix"><b>2</b> corrected</span>
+      <span class="chip"><b>0</b> unverifiable</span>
+      <details><summary>What the check corrected</summary>
+        <ul>
+          <li><b>Believed:</b> online softmax computes softmax in one pass. <b>True:</b> one pass finds <var>m</var> and the normalizer. A standalone softmax still needs a second pass to write the outputs. As a result, it costs 3 memory accesses per element, not 1. FlashAttention gets to one pass over K and V because it never stores the probabilities. It rescales its partial output O instead. <span class="src">Milakov &amp; Gimelshein Alg. 3 and §4 · FlashAttention Alg. 0 and Alg. 1 line 12</span></li>
+          <li><b>Believed:</b> B<sub>r</sub> = ⌈M/4d⌉ and B<sub>c</sub> = min(⌈M/4d⌉, d), as in FlashAttention arXiv v1, Alg. 1 line 1. <b>True:</b> v2 swaps them. B<sub>c</sub> = ⌈M/4d⌉ and B<sub>r</sub> = min(⌈M/4d⌉, d). The v2 form matches the proof of Theorem 2, which loads K and V blocks of size Θ(M). <span class="src">arXiv 2205.14135 v1 vs v2, Alg. 1 line 1 and §3.2</span></li>
+        </ul>
+        <p>Checked on 2 Oct 2026 against the arXiv v2 PDFs of both papers. Algorithm line numbers on this page follow those PDFs.</p>
+      </details>
+    </div>
+  </header>
+
+  <section id="why">
+    <p class="eyebrow">Milakov &amp; Gimelshein §2–3</p>
+    <h2>Why softmax wants three passes</h2>
+    <div class="prose">
+      <p>Softmax turns a row of scores <var>x</var> into weights that sum to 1: <span class="nw"><var>y</var><sub><var>i</var></sub> = e<sup><var>x</var><sub><var>i</var></sub></sup> / Σ<sub><var>j</var></sub> e<sup><var>x</var><sub><var>j</var></sub></sup></span>. In attention, one row holds the scores of one query against all keys.</p>
+      <p>Take a score of 100. In 32-bit floats, e<sup>100</sup> is infinity, because e<sup><var>x</var></sup> overflows for any <var>x</var> above approximately 88.72. Thus the plain formula fails on large scores.</p>
+      <p>The safe version subtracts the row maximum <var>m</var> first: <span class="nw"><var>y</var><sub><var>i</var></sub> = e<sup><var>x</var><sub><var>i</var></sub> − <var>m</var></sup> / Σ<sub><var>j</var></sub> e<sup><var>x</var><sub><var>j</var></sub> − <var>m</var></sup></span>. The result does not change, and no exponent is above 0. But the sum needs <var>m</var>, and <var>m</var> needs a full read of the row. As a result, safe softmax reads the row three times. In 2018 the major frameworks used this version.</p>
+      <p><span data-ref="online">Online softmax</span> merges the first two passes. It keeps a running max and a running sum, and it corrects the sum each time the max moves. The idea came from the one-pass algorithm for variance (Welford, 1962).</p>
+    </div>
+    <figure>
+      <div class="scroll">
+        <svg class="wide" viewBox="0 0 1010 352" role="img" aria-label="Passes over one row of scores. Naive softmax: 2 passes, but it overflows. Safe softmax: 3 passes. Online softmax: 2 passes. FlashAttention: 1 pass over K and V blocks, with no output pass.">
+          <defs>
+            <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M0,0 L8,4 L0,8 z"/></marker>
+          </defs>
+          <text class="sv-head" x="286" y="24" text-anchor="middle">PASS 1</text>
+          <text class="sv-head" x="526" y="24" text-anchor="middle">PASS 2</text>
+          <text class="sv-head" x="766" y="24" text-anchor="middle">PASS 3</text>
+          <text class="sv-head" x="948" y="24" text-anchor="middle">ACCESSES</text>
+          <text class="sv-head" x="948" y="38" text-anchor="middle">PER ELEMENT</text>
+
+          <!-- row 1: naive -->
+          <text class="sv-title" x="16" y="77">Naive</text>
+          <text class="sv-lab" x="16" y="94">Milakov Alg. 1</text>
+          <rect class="bx-bad" x="186" y="52" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="286" y="77" text-anchor="middle">sum exp(x) → d</text>
+          <text class="sv-sub sv-hot" x="286" y="95" text-anchor="middle">exp overflows fp32</text>
+          <line class="ln" x1="386" y1="80" x2="424" y2="80" marker-end="url(#ah)"/>
+          <text class="sv-lab" x="405" y="72" text-anchor="middle">d</text>
+          <rect class="bx" x="426" y="52" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="526" y="77" text-anchor="middle">y = exp(x) / d</text>
+          <text class="sv-sub" x="526" y="95" text-anchor="middle">reads x, writes y</text>
+          <text class="sv-mono" x="948" y="77" text-anchor="middle">3</text>
+          <text class="sv-sub" x="948" y="95" text-anchor="middle">2 loads, 1 store</text>
+
+          <!-- row 2: safe -->
+          <text class="sv-title" x="16" y="151">Safe</text>
+          <text class="sv-lab" x="16" y="168">Milakov Alg. 2</text>
+          <rect class="bx" x="186" y="126" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="286" y="151" text-anchor="middle">max(x) → m</text>
+          <text class="sv-sub" x="286" y="169" text-anchor="middle">reads x</text>
+          <line class="ln" x1="386" y1="154" x2="424" y2="154" marker-end="url(#ah)"/>
+          <text class="sv-lab" x="405" y="146" text-anchor="middle">m</text>
+          <rect class="bx" x="426" y="126" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="526" y="151" text-anchor="middle">sum exp(x−m) → d</text>
+          <text class="sv-sub" x="526" y="169" text-anchor="middle">reads x</text>
+          <line class="ln" x1="626" y1="154" x2="664" y2="154" marker-end="url(#ah)"/>
+          <text class="sv-lab" x="645" y="146" text-anchor="middle">m, d</text>
+          <rect class="bx" x="666" y="126" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="766" y="151" text-anchor="middle">y = exp(x−m) / d</text>
+          <text class="sv-sub" x="766" y="169" text-anchor="middle">reads x, writes y</text>
+          <text class="sv-mono" x="948" y="151" text-anchor="middle">4</text>
+          <text class="sv-sub" x="948" y="169" text-anchor="middle">3 loads, 1 store</text>
+
+          <!-- row 3: online -->
+          <g data-ref="online">
+            <text class="sv-title" x="16" y="225">Online</text>
+            <text class="sv-lab" x="16" y="242">Milakov Alg. 3</text>
+            <rect class="bx-new" x="186" y="200" width="200" height="56" rx="7"/>
+            <text class="sv-mono" x="286" y="225" text-anchor="middle">m and d, one loop</text>
+            <text class="sv-sub" x="286" y="243" text-anchor="middle">d × exp(old m − m)</text>
+          </g>
+          <line class="ln" x1="386" y1="228" x2="424" y2="228" marker-end="url(#ah)"/>
+          <text class="sv-lab" x="405" y="220" text-anchor="middle">m, d</text>
+          <rect class="bx" x="426" y="200" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="526" y="225" text-anchor="middle">y = exp(x−m) / d</text>
+          <text class="sv-sub" x="526" y="243" text-anchor="middle">reads x, writes y</text>
+          <text class="sv-mono" x="948" y="225" text-anchor="middle">3</text>
+          <text class="sv-sub" x="948" y="243" text-anchor="middle">2 loads, 1 store</text>
+
+          <!-- row 4: FlashAttention -->
+          <text class="sv-title" x="16" y="299">FlashAttention</text>
+          <text class="sv-lab" x="16" y="316">FA Alg. 1</text>
+          <rect class="bx-new" x="186" y="274" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="286" y="299" text-anchor="middle">m, ℓ, O per block</text>
+          <text class="sv-sub" x="286" y="317" text-anchor="middle">O × exp(old m − m)</text>
+          <rect class="bx-ghost" x="426" y="274" width="200" height="56" rx="7"/>
+          <text class="sv-lab" x="526" y="299" text-anchor="middle">no output pass</text>
+          <text class="sv-sub" x="526" y="317" text-anchor="middle">P is never stored</text>
+          <text class="sv-mono" x="948" y="299" text-anchor="middle">S, P on chip</text>
+          <text class="sv-sub" x="948" y="317" text-anchor="middle">not stored in HBM</text>
+        </svg>
+      </div>
+      <figcaption>Forward-pass work over one row of scores <var>x</var>, from Milakov &amp; Gimelshein Algorithms 1–3 (access counts from §2–4) and FlashAttention Algorithms 0–1. Online softmax folds the max pass into the sum pass. FlashAttention also drops the output pass. It multiplies the block weights P̃ by V on chip. Thus it never needs the normalized probabilities P on their own.</figcaption>
+    </figure>
+  </section>
+
+  <section id="by-hand">
+    <p class="eyebrow">Worked example · computed in Python, checked against the direct formula</p>
+    <h2>One rescale, by hand</h2>
+    <div class="prose">
+      <p>Take one row with four scores in two blocks, [2, 1] and [4, 3]. Each key has one value: <var>v</var> = [10, 20, 30, 40]. The goal is the attention output <span class="nw">O = Σ <var>p</var><sub><var>i</var></sub> <var>v</var><sub><var>i</var></sub></span>, where <var>p</var> is the softmax of the scores.</p>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>After</th><th>Running max <var>m</var></th><th>Sum <var>ℓ</var> = Σ e<sup><var>x</var> − <var>m</var></sup></th><th>Output O</th></tr></thead>
+        <tbody>
+          <tr><td>block 1: [2, 1]</td><td class="mono">2</td><td class="mono">e⁰ + e⁻¹ = 1.3679</td><td class="mono">(1·10 + 0.3679·20) / 1.3679 = 12.6894</td></tr>
+          <tr class="now"><td>block 2: [4, 3]</td><td class="mono">max(2, 4) = 4</td><td class="mono"><b>0.1353</b>·1.3679 + (e⁰ + e⁻¹) = 1.5530</td><td class="mono">(<b>0.1353</b>·1.3679·12.6894 + 1·30 + 0.3679·40) / 1.5530 = 30.3054</td></tr>
+          <tr class="check"><td>direct softmax, all four</td><td class="mono">4</td><td class="mono">e⁻² + e⁻³ + e⁰ + e⁻¹ = 1.5530</td><td class="mono">0.0871·10 + 0.0321·20 + 0.6439·30 + 0.2369·40 = 30.3054</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>Block 2 raised the max from 2 to 4. The weights of block 1 use the old max as their reference. Thus each one is too large by a factor of e². One multiplication by <span class="nw">α = e<sup>2 − 4</sup> = 0.1353</span> fixes all of them at once, together with their sum and their share of the output. The algorithm does not read block 1 again.</p>
+      <p>In general, the state (<var>m</var>, <var>ℓ</var>, O) after some blocks merges with a new block. The new block has its own max <var>m̃</var>, its own sum <var>ℓ̃</var>, and its own weights P̃ = e<sup><var>x</var> − <var>m̃</var></sup>:</p>
+    </div>
+    <div class="eq scroll" role="math" aria-label="Merge rule">
+      <div><var>m</var><sub>new</sub> = max(<var>m</var>, <var>m̃</var>)</div>
+      <div><var>ℓ</var><sub>new</sub> = e<sup><var>m</var> − <var>m</var><sub>new</sub></sup> <var>ℓ</var> + e<sup><var>m̃</var> − <var>m</var><sub>new</sub></sup> <var>ℓ̃</var></div>
+      <div>O<sub>new</sub> = ( e<sup><var>m</var> − <var>m</var><sub>new</sub></sup> <var>ℓ</var> O + e<sup><var>m̃</var> − <var>m</var><sub>new</sub></sup> P̃V ) / <var>ℓ</var><sub>new</sub></div>
+    </div>
+    <div class="prose">
+      <p>These are lines 11 and 12 of FlashAttention's Algorithm 1. One of the two factors is always e⁰ = 1. The side that holds the larger max keeps its numbers, and only the other side shrinks. Line 12 divides O by <var>ℓ</var><sub>new</sub> at every step. Thus O is always the softmax average of the values read up to that step. After block 1 above, 12.6894 is exactly the softmax of [2, 1] applied to [10, 20].</p>
+      <h3>Why the order of blocks does not matter</h3>
+      <p>Think of the pair (<var>m</var>, <var>ℓ</var>) as the number <var>ℓ</var>·e<sup><var>m</var></sup>, written relative to <var>m</var>. A merge adds two of these numbers and writes the total relative to the larger max. Addition does not depend on order or grouping. Thus blocks can merge left to right, in reverse, or as a tree. Milakov &amp; Gimelshein state this for their merge operator ⊕ and leave out the proof (§3.1). The simulator below checks it with numbers.</p>
+      <h3>Why it stays safe</h3>
+      <p>The running max <var>m</var> is always one of the scores. Thus it cannot overflow. No exponent is above 0, and as a result no weight is above 1. The sum <var>ℓ</var> stays between 1 and the number of scores read up to that point (Milakov &amp; Gimelshein §3).</p>
+    </div>
+  </section>
+
+  <section id="sim">
+    <p class="eyebrow">Interactive · runs in your browser</p>
+    <h2>Step through one row <span class="badge">simulated</span></h2>
+    <div class="prose">
+      <p>One query row with 16 keys, split into blocks. The scores are <var>q</var>·<var>k</var> for made-up vectors in four dimensions, and each key has a made-up value <var>v</var> with two numbers. The arithmetic is FlashAttention's Algorithm 1, lines 10–12, for a single query row. The figure opens on the last step. Move the slider back to watch the state build up.</p>
+    </div>
+
+    <div class="controls" role="group" aria-label="Simulator settings">
+      <label class="ctl" for="bc">Block size B<sub>c</sub>
+        <select id="bc"><option value="2">2 keys</option><option value="4" selected>4 keys</option><option value="8">8 keys</option><option value="16">16 keys (one block)</option></select>
+      </label>
+      <label class="ctl" for="order">Largest score sits
+        <select id="order"><option value="drawn" selected>where it was drawn</option><option value="last">in the last block</option><option value="first">in the first block</option></select>
+      </label>
+      <label class="ctl chk" for="shift"><input type="checkbox" id="shift"> Add 100 to every score</label>
+      <button type="button" id="reseed">New scores</button>
+      <span class="mono seed" id="seedlab">seed 26</span>
+    </div>
+    <div class="stepper">
+      <button type="button" id="prev">◀ Back</button>
+      <input type="range" id="step" min="0" max="4" value="4" aria-label="Number of blocks read">
+      <button type="button" id="next">Next ▶</button>
+      <span class="mono" id="steplab">4 of 4 blocks read</span>
+    </div>
+
+    <figure id="sim-fig">
+      <div class="legend" aria-hidden="true">
+        <span><i class="sw dot"></i>key read</span>
+        <span><i class="sw ring"></i>not read yet</span>
+        <span><i class="sw now"></i>block just read</span>
+        <span><i class="sw max"></i>running max <var>m</var></span>
+        <span><i class="sw ghostk"></i>weight before this step's rescale</span>
+      </div>
+      <div class="scroll"><svg class="mid" id="sim-svg" viewBox="0 0 640 332" role="img" aria-label="Scores of 16 keys with the running max, and each read key's weight exp(x minus m). When a block raises the max, all earlier weights shrink by the same factor."></svg></div>
+      <p class="steptext" id="steptext" aria-live="polite"></p>
+      <figcaption>Simulated data. Top: each key's score and the running max <var>m</var> after the selected step. Bottom: each read key's weight e<sup><var>x</var> − <var>m</var></sup> against the current max. The bars add up to <var>ℓ</var>. When a block raises <var>m</var>, every earlier bar shrinks by the same factor α. Hover a column for its numbers.</figcaption>
+    </figure>
+
+    <div class="tbl-wrap">
+      <table class="tbl" aria-label="State after each block">
+        <thead><tr><th>Block</th><th>Keys</th><th class="num">Block max <var>m̃</var></th><th class="num">Running max <var>m</var></th><th class="num">Rescale α</th><th class="num">Sum <var>ℓ</var></th><th>Output O</th></tr></thead>
+        <tbody id="state-body"></tbody>
+      </table>
+    </div>
+
+    <h3>After all blocks</h3>
+    <ul class="result" id="result"></ul>
+  </section>
+
+  <section id="flash">
+    <p class="eyebrow">FlashAttention Algorithm 1 · arXiv 2205.14135v2</p>
+    <h2>The same update, inside FlashAttention</h2>
+    <div class="prose">
+      <p>A GPU has two memories that matter here. HBM is the large memory off the chip. SRAM is the small memory on the chip, next to the compute units. On an A100, HBM holds 40–80 GB at 1.5–2.0 TB/s. Each of the 108 streaming multiprocessors has 192 KB of SRAM, with an estimated bandwidth of approximately 19 TB/s (FlashAttention §2.1).</p>
+      <p>Standard attention writes the full N × N score matrix S and probability matrix P to HBM and reads them back (Algorithm 0). FlashAttention never stores them. It splits Q into blocks of B<sub>r</sub> rows and K, V into blocks of B<sub>c</sub> rows. The SRAM size M and the head dimension d set both sizes: B<sub>c</sub> = ⌈M/4d⌉ and B<sub>r</sub> = min(⌈M/4d⌉, d). For each pair of blocks, it computes S on chip. Then it runs the update from the worked example on every row of the block at once. It carries a <span data-ref="state">running state</span> from one K, V block to the next.</p>
+    </div>
+    <figure>
+      <div class="scroll">
+        <svg class="wide" viewBox="0 0 940 400" role="img" aria-label="One step of FlashAttention Algorithm 1: it loads a K, V block and a Q block, computes S and the block statistics on chip, merges them into the running state O, l, m, and writes that state back to HBM. S and P stay on chip.">
+          <defs>
+            <marker id="ah2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M0,0 L8,4 L0,8 z"/></marker>
+          </defs>
+          <text class="sv-head" x="120" y="22" text-anchor="middle">HBM · OFF CHIP</text>
+          <text class="sv-head" x="460" y="22" text-anchor="middle">SRAM · ON CHIP</text>
+          <text class="sv-head" x="820" y="22" text-anchor="middle">HBM · OFF CHIP</text>
+          <text class="sv-sub" x="120" y="42" text-anchor="middle">inner loop over i</text>
+          <text class="sv-sub" x="820" y="42" text-anchor="middle">outer loop over j</text>
+          <rect class="region" x="340" y="32" width="240" height="356" rx="10"/>
+
+          <!-- HBM, left -->
+          <rect class="bx-store" x="20" y="52" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="120" y="77" text-anchor="middle">Q<tspan class="sb" dy="3">i</tspan></text>
+          <text class="sv-sub" x="120" y="96" text-anchor="middle">one block of query rows</text>
+          <g data-ref="state">
+            <rect class="bx-new" x="20" y="220" width="200" height="56" rx="7"/>
+            <text class="sv-mono" x="120" y="245" text-anchor="middle">O<tspan class="sb" dy="3">i</tspan><tspan dy="-3">, ℓ</tspan><tspan class="sb" dy="3">i</tspan><tspan dy="-3">, m</tspan><tspan class="sb" dy="3">i</tspan></text>
+            <text class="sv-sub" x="120" y="264" text-anchor="middle">running state</text>
+          </g>
+
+          <!-- HBM, right -->
+          <rect class="bx-store" x="720" y="52" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="820" y="77" text-anchor="middle">K<tspan class="sb" dy="3">j</tspan><tspan dy="-3">, V</tspan><tspan class="sb" dy="3">j</tspan></text>
+          <text class="sv-sub" x="820" y="96" text-anchor="middle">one block of key rows</text>
+
+          <!-- SRAM chain -->
+          <rect class="bx" x="360" y="52" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="460" y="77" text-anchor="middle">S = Q<tspan class="sb" dy="3">i</tspan><tspan dy="-3">K</tspan><tspan class="sb" dy="3">j</tspan><tspan class="sb" dy="-9">T</tspan></text>
+          <text class="sv-lab" x="460" y="96" text-anchor="middle">line 9</text>
+          <rect class="bx" x="360" y="136" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="460" y="161" text-anchor="middle">rowmax, exp, rowsum</text>
+          <text class="sv-lab" x="460" y="180" text-anchor="middle">line 10</text>
+          <rect class="bx-new" x="360" y="220" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="460" y="245" text-anchor="middle">merge m and ℓ</text>
+          <text class="sv-lab" x="460" y="264" text-anchor="middle">line 11</text>
+          <rect class="bx-new" x="360" y="304" width="200" height="56" rx="7"/>
+          <text class="sv-mono" x="460" y="329" text-anchor="middle">rescale O, add P̃V</text>
+          <text class="sv-lab" x="460" y="348" text-anchor="middle">line 12</text>
+          <text class="sv-lab" x="460" y="378" text-anchor="middle">S and P̃ stay here</text>
+
+          <line class="ln" x1="460" y1="108" x2="460" y2="134" marker-end="url(#ah2)"/>
+          <text class="sv-lab" x="470" y="126">S</text>
+          <line class="ln" x1="460" y1="192" x2="460" y2="218" marker-end="url(#ah2)"/>
+          <text class="sv-lab" x="470" y="210">m̃, ℓ̃, P̃</text>
+          <line class="ln" x1="460" y1="276" x2="460" y2="302" marker-end="url(#ah2)"/>
+          <text class="sv-lab" x="470" y="294">new m, ℓ</text>
+
+          <!-- loads and writes -->
+          <line class="ln" x1="220" y1="80" x2="358" y2="80" marker-end="url(#ah2)"/>
+          <text class="sv-lab" x="289" y="72" text-anchor="middle">loads (line 8)</text>
+          <line class="ln" x1="720" y1="80" x2="562" y2="80" marker-end="url(#ah2)"/>
+          <text class="sv-lab" x="641" y="72" text-anchor="middle">loads (line 6)</text>
+          <line class="ln" x1="220" y1="248" x2="358" y2="248" marker-end="url(#ah2)"/>
+          <text class="sv-lab" x="289" y="240" text-anchor="middle">loads (line 8)</text>
+          <path class="ln" d="M360,332 H120 V278" marker-end="url(#ah2)"/>
+          <text class="sv-lab" x="240" y="324" text-anchor="middle">writes (lines 12–13)</text>
+          <path class="ln" d="M820,108 V332 H562" marker-end="url(#ah2)"/>
+          <text class="sv-lab" x="830" y="224">V<tspan class="sb" dy="3">j</tspan><tspan dy="-3"> for P̃V</tspan></text>
+        </svg>
+      </div>
+      <figcaption>One step of FlashAttention Algorithm 1 for a pair (Q block <var>i</var>, K, V block <var>j</var>). The running state O<sub><var>i</var></sub>, <var>ℓ</var><sub><var>i</var></sub>, <var>m</var><sub><var>i</var></sub> goes to SRAM and back to HBM in every step. S and P̃ exist only on chip. Line numbers follow arXiv 2205.14135v2.</figcaption>
+    </figure>
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>In the worked example</th><th>Algorithm 1</th><th>Shape per step</th></tr></thead>
+        <tbody>
+          <tr><td>the scores of one block</td><td>line 9: S<sub><var>ij</var></sub> = Q<sub><var>i</var></sub>K<sub><var>j</var></sub><sup>T</sup></td><td class="mono">B<sub>r</sub> × B<sub>c</sub></td></tr>
+          <tr><td>block max <var>m̃</var>, weights P̃, block sum <var>ℓ̃</var></td><td>line 10: rowmax, exp, rowsum</td><td class="mono">B<sub>r</sub>, B<sub>r</sub> × B<sub>c</sub>, B<sub>r</sub></td></tr>
+          <tr><td>new max, rescaled sum</td><td>line 11</td><td class="mono">B<sub>r</sub> each</td></tr>
+          <tr><td>rescaled output plus P̃V</td><td>line 12</td><td class="mono">B<sub>r</sub> × d</td></tr>
+          <tr><td>keep <var>m</var> and <var>ℓ</var> for the next block</td><td>line 13</td><td class="mono">written to HBM</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="prose">
+      <p>Two details of Algorithm 1 shape the picture above. The outer loop runs over K, V blocks (line 5), and the inner loop runs over Q blocks (line 7). Thus each Q block's running state goes back to HBM after every step (lines 12–13). It returns at the next K, V block (line 8). Also, the state starts as O = 0, <var>ℓ</var> = 0 and <var>m</var> = −∞ (line 2). As a result, the first block needs no special case.</p>
+      <p>The same two numbers help again in the backward pass. FlashAttention stores O and (<var>m</var>, <var>ℓ</var>) for each row. With them, it recomputes S and P block by block instead of storing them (§3.1). The result is exact: Algorithm 1 returns softmax(QK<sup>T</sup>)V with O(N²d) FLOPs and O(N) extra memory (Theorem 1). It needs Θ(N²d²/M) HBM accesses, against Θ(Nd + N²) for standard attention (Theorem 2). For typical head dimensions of 64–128 and M around 100 KB, d² is many times smaller than M.</p>
+    </div>
+  </section>
+
+  <section id="measured">
+    <p class="eyebrow">Numbers as published, with their conditions</p>
+    <h2>Measured gains</h2>
+    <h3>Online softmax by itself</h3>
+    <p class="prose">Milakov &amp; Gimelshein §5. Conditions: NVIDIA Tesla V100 PCIe 16 GB, fp32, CUDA 9.1, one thread block per row, compared with safe softmax. Up to a row length of 1,000, all versions run at the same speed. With 4,000 rows, cache thrashing above that length makes them all limited by DRAM bandwidth, and the saved pass shows.</p>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Comparison</th><th class="num">Rows</th><th class="num">Row length</th><th class="num">Speedup</th></tr></thead>
+        <tbody>
+          <tr><td>online vs safe softmax</td><td class="num mono">4,000</td><td class="num mono">4,000</td><td class="num mono">≈1.3×</td></tr>
+          <tr><td>online vs safe softmax</td><td class="num mono">10</td><td class="num mono">≥ 1,000</td><td class="num mono">≈1.15×</td></tr>
+          <tr><td>online softmax + top-5, fused, vs safe softmax then top-5</td><td class="num mono">4,000</td><td class="num mono">25,000</td><td class="num mono">≈5×</td></tr>
+          <tr><td>online softmax + top-5, fused, vs safe softmax then top-5</td><td class="num mono">10</td><td class="num mono">range of Fig. 4</td><td class="num mono">1.5–2.5×</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>FlashAttention as a whole</h3>
+    <p class="prose">FlashAttention Fig. 2, left. Conditions: GPT-2 medium attention, sequence length 1024, head dimension 64, 16 heads, batch size 64, forward plus backward, on an A100. These numbers include tiling, which needs online softmax, and recomputation in the backward pass.</p>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Attention</th><th class="num">Standard</th><th class="num">FlashAttention</th></tr></thead>
+        <tbody>
+          <tr><td>GFLOPs</td><td class="num mono">66.6</td><td class="num mono">75.2</td></tr>
+          <tr><td>HBM reads and writes (GB)</td><td class="num mono">40.3</td><td class="num mono">4.4</td></tr>
+          <tr><td>Runtime (ms)</td><td class="num mono">41.7</td><td class="num mono">7.3</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="prose">FlashAttention does more arithmetic, because the backward pass recomputes S and P. But it moves approximately 9× less data and runs approximately 5.7× faster.</p>
+  </section>
+
+  <footer>
+    <div class="prose">
+      <p>Built from Milakov &amp; Gimelshein, “Online normalizer calculation for softmax”, <a href="https://arxiv.org/abs/1805.02867">arXiv 1805.02867v2</a> (28 Jul 2018), and Dao, Fu, Ermon, Rudra &amp; Ré, “FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness”, <a href="https://arxiv.org/abs/2205.14135">arXiv 2205.14135v2</a> (23 Jun 2022). Algorithm line numbers follow the v2 PDFs.</p>
+      <p>FlashAttention cites three sources for splitting softmax with scaling: Reformer [51], Milakov &amp; Gimelshein [60], and Rabe &amp; Staats [66]. It calls this style of computation algebraic aggregation, after Gray et al. (1997). The simulator runs in your browser on made-up data.</p>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var SVGNS = "http://www.w3.org/2000/svg";
+
+  function el(name, attrs, parent) {
+    var n = document.createElementNS(SVGNS, name);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function makeTip(fig) { var t = document.createElement("div"); t.className = "tip"; t.hidden = true; fig.appendChild(t); return t; }
+  function showTip(tip, fig, evt, html) {
+    tip.innerHTML = html; tip.hidden = false;
+    var r = fig.getBoundingClientRect(), x = evt.clientX - r.left + 14, y = evt.clientY - r.top + 14;
+    if (x + tip.offsetWidth > r.width - 8) x = evt.clientX - r.left - tip.offsetWidth - 14;
+    tip.style.left = Math.max(4, x) + "px"; tip.style.top = y + "px";
+  }
+  // Bar with rounded top, anchored to the baseline.
+  function barPath(x, w, top, base, r) {
+    r = Math.max(0, Math.min(r, w / 2, base - top));
+    return "M" + x + "," + base + "V" + (top + r) + "Q" + x + "," + top + " " + (x + r) + "," + top +
+      "H" + (x + w - r) + "Q" + (x + w) + "," + top + " " + (x + w) + "," + (top + r) + "V" + base + "Z";
+  }
+  // Seeded PRNG, so every reader sees the same first view.
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  // ---------- number formatting ----------
+  function fmt(v, d) {
+    if (d === undefined) d = 2;
+    if (v === -Infinity) return "−∞";
+    if (v === Infinity) return "∞";
+    if (v !== v) return "NaN";
+    return v.toFixed(d).replace("-", "−");
+  }
+  function fmtE(v) { return v === 0 ? "0" : v.toExponential(1).replace("-", "−"); }
+
+  // ---------- the simulation ----------
+  var N = 16, D = 4;
+  var sim = { seed: 26, bc: 4, order: "drawn", shift: false, step: 4 };
+  var cur = null;
+
+  function genKeys(seed) {
+    var r = mulberry32(seed);
+    function g() { var u = 1 - r(), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+    var q = [], keys = [], i, k;
+    for (i = 0; i < D; i++) q.push(g());
+    for (k = 0; k < N; k++) {
+      var s = 0;
+      for (i = 0; i < D; i++) s += q[i] * g();
+      keys.push({ id: k + 1, x: Math.round(s * 100) / 100, v: [Math.round(g() * 20) / 10, Math.round(g() * 20) / 10] });
+    }
+    return keys;
+  }
+  function arrange(keys, order, shift) {
+    var ks = keys.map(function (k) { return { id: k.id, x: k.x, v: k.v }; });
+    var im = 0, t;
+    ks.forEach(function (k, i) { if (k.x > ks[im].x) im = i; });
+    if (order === "last") { t = ks[im]; ks[im] = ks[ks.length - 1]; ks[ks.length - 1] = t; }
+    if (order === "first") { t = ks[im]; ks[im] = ks[0]; ks[0] = t; }
+    if (shift) ks.forEach(function (k) { k.x = Math.round((k.x + 100) * 100) / 100; });
+    return ks;
+  }
+  // FlashAttention Algorithm 1, lines 10-12, for one query row (B_r = 1).
+  function run(keys, bc) {
+    var m = -Infinity, l = 0, O = [0, 0], steps = [];
+    for (var lo = 0; lo < keys.length; lo += bc) {
+      var blk = keys.slice(lo, lo + bc);
+      var mt = Math.max.apply(null, blk.map(function (k) { return k.x; }));
+      var P = blk.map(function (k) { return Math.exp(k.x - mt); });
+      var lt = P.reduce(function (a, b) { return a + b; }, 0);
+      var PV = [0, 0];
+      P.forEach(function (p, i) { PV[0] += p * blk[i].v[0]; PV[1] += p * blk[i].v[1]; });
+      var mn = Math.max(m, mt), a = Math.exp(m - mn), b = Math.exp(mt - mn), ln = a * l + b * lt;
+      var On = [(l * a * O[0] + b * PV[0]) / ln, (l * a * O[1] + b * PV[1]) / ln];
+      steps.push({ lo: lo, hi: lo + blk.length, mt: mt, mOld: m, m: mn, a: a, b: b, lt: lt, l: ln, O: On,
+        own: { m: mt, l: lt, O: [PV[0] / lt, PV[1] / lt] } });
+      m = mn; l = ln; O = On;
+    }
+    return steps;
+  }
+  // Three-pass safe softmax over the whole row, for comparison.
+  function reference(keys) {
+    var M = Math.max.apply(null, keys.map(function (k) { return k.x; }));
+    var w = keys.map(function (k) { return Math.exp(k.x - M); });
+    var L = w.reduce(function (a, b) { return a + b; }, 0), O = [0, 0];
+    w.forEach(function (wi, i) { O[0] += wi * keys[i].v[0]; O[1] += wi * keys[i].v[1]; });
+    return { m: M, l: L, O: [O[0] / L, O[1] / L] };
+  }
+  // The pair merge (Milakov & Gimelshein eq. 4), extended with the output O.
+  function merge(A, B) {
+    var m = Math.max(A.m, B.m), a = Math.exp(A.m - m), b = Math.exp(B.m - m), l = a * A.l + b * B.l;
+    return { m: m, l: l, O: [(a * A.l * A.O[0] + b * B.l * B.O[0]) / l, (a * A.l * A.O[1] + b * B.l * B.O[1]) / l] };
+  }
+  function foldReverse(bs) { var acc = bs[bs.length - 1]; for (var i = bs.length - 2; i >= 0; i--) acc = merge(acc, bs[i]); return acc; }
+  function foldTree(bs) {
+    if (bs.length === 1) return bs[0];
+    var next = [];
+    for (var i = 0; i < bs.length; i += 2) next.push(i + 1 < bs.length ? merge(bs[i], bs[i + 1]) : bs[i]);
+    return foldTree(next);
+  }
+  // float32 versions: round after every operation.
+  var f32 = Math.fround;
+  function naive32(keys) { var s = 0; keys.forEach(function (k) { s = f32(s + f32(Math.exp(f32(k.x)))); }); return s; }
+  function online32(keys) {
+    var m = -Infinity, d = 0;
+    keys.forEach(function (k) { var x = f32(k.x), mn = Math.max(m, x); d = f32(f32(d * f32(Math.exp(f32(m - mn)))) + f32(Math.exp(f32(x - mn)))); m = mn; });
+    return { m: m, d: d };
+  }
+  function diffO(A, B) { return Math.max(Math.abs(A[0] - B[0]), Math.abs(A[1] - B[1])); }
+
+  function recompute() {
+    var base = genKeys(sim.seed), keys = arrange(base, sim.order, sim.shift);
+    var steps = run(keys, sim.bc);
+    cur = { keys: keys, keys0: arrange(base, sim.order, false), steps: steps, ref: reference(keys) };
+    sim.step = steps.length;
+    var range = document.getElementById("step");
+    range.max = String(steps.length); range.value = String(sim.step);
+    document.getElementById("seedlab").textContent = "seed " + sim.seed;
+    draw();
+    drawResult();
+  }
+
+  var svg = document.getElementById("sim-svg"), fig = document.getElementById("sim-fig"), tip = makeTip(fig);
+  var G = { L: 60, R: 562, aT: 40, aB: 146, bT: 200, bB: 296, lab: 320 };
+
+  function draw() {
+    var keys = cur.keys, steps = cur.steps, t = sim.step, T = steps.length;
+    var st = t > 0 ? steps[t - 1] : null, read = st ? st.hi : 0, mNow = st ? st.m : -Infinity;
+    var slot = (G.R - G.L) / keys.length;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    // block bands and block numbers
+    steps.forEach(function (s, j) {
+      var cls = (st && j === t - 1) ? "band-now" : (j % 2 ? "band-b" : "band-a");
+      el("rect", { x: G.L + s.lo * slot, y: G.aT - 10, width: (s.hi - s.lo) * slot, height: G.bB - G.aT + 14, class: cls }, svg);
+      el("text", { x: G.L + (s.lo + s.hi) / 2 * slot, y: G.lab, "text-anchor": "middle", class: "sv-lab" }, svg).textContent = String(j + 1);
+    });
+    el("text", { x: G.L - 10, y: G.lab, "text-anchor": "end", class: "sv-lab" }, svg).textContent = "block";
+
+    // panel A: scores
+    var xs = keys.map(function (k) { return k.x; });
+    var lo = Math.min.apply(null, xs), hi = Math.max.apply(null, xs);
+    var tick = Math.max(1, Math.ceil((hi - lo) / 4));
+    var y0 = Math.floor(lo / tick) * tick, y1 = Math.ceil(hi / tick) * tick;
+    if (y1 === y0) y1 += tick;
+    function yA(v) { return G.aB - (v - y0) / (y1 - y0) * (G.aB - G.aT); }
+    for (var v = y0; v <= y1 + 1e-9; v += tick) {
+      el("line", { x1: G.L, x2: G.R, y1: yA(v), y2: yA(v), class: v === 0 ? "axis" : "grid" }, svg);
+      el("text", { x: G.L - 10, y: yA(v) + 4, "text-anchor": "end", class: "sv-lab" }, svg).textContent = fmt(v, 0);
+    }
+    el("text", { x: G.L, y: 24, class: "sv-sub" }, svg).textContent = "score x = q·k (one query row, 16 keys)";
+
+    // panel B: weights
+    function yB(w) { return G.bB - w * (G.bB - G.bT); }
+    [0, 0.5, 1].forEach(function (w) {
+      el("line", { x1: G.L, x2: G.R, y1: yB(w), y2: yB(w), class: w === 0 ? "axis" : "grid" }, svg);
+      el("text", { x: G.L - 10, y: yB(w) + 4, "text-anchor": "end", class: "sv-lab" }, svg).textContent = String(w);
+    });
+    el("text", { x: G.L, y: 186, class: "sv-sub" }, svg).textContent = "weight exp(x − m); the bars add up to ℓ";
+
+    var rescaled = st && t > 1 && st.a < 1;
+    keys.forEach(function (k, i) {
+      var cx = G.L + (i + 0.5) * slot, isRead = i < read;
+      if (isRead) {
+        if (rescaled && i < st.lo) {
+          var wOld = Math.exp(k.x - st.mOld);
+          el("rect", { x: cx - 7, y: yB(wOld), width: 14, height: G.bB - yB(wOld), class: "ghost" }, svg);
+        }
+        var w = Math.exp(k.x - mNow);
+        el("path", { d: barPath(cx - 7, 14, yB(w), G.bB, 3), class: "bar-read" }, svg);
+      }
+    });
+    if (st) {
+      el("line", { x1: G.L, x2: G.R, y1: yA(mNow), y2: yA(mNow), class: "ln-max" }, svg);
+      el("text", { x: G.R + 6, y: yA(mNow) + 4, class: "sv-lab sv-hot" }, svg).textContent = "m = " + fmt(mNow);
+    }
+    keys.forEach(function (k, i) {
+      var cx = G.L + (i + 0.5) * slot;
+      el("circle", { cx: cx, cy: yA(k.x), r: i < read ? 5 : 4.5, class: i < read ? "dot-read" : "dot-unread" }, svg);
+    });
+
+    // hover targets, one per key
+    keys.forEach(function (k, i) {
+      var hit = el("rect", { x: G.L + i * slot, y: G.aT - 10, width: slot, height: G.bB - G.aT + 14, fill: "transparent" }, svg);
+      var blockNo = Math.floor(i / sim.bc) + 1;
+      hit.addEventListener("mousemove", function (e) {
+        var body = "<b>key " + k.id + "</b> · block " + blockNo + "<br>score x = " + fmt(k.x) + "<br>value v = (" + fmt(k.v[0], 1) + ", " + fmt(k.v[1], 1) + ")";
+        body += i < read ? "<br>weight exp(x − m) = " + fmt(Math.exp(k.x - mNow), 3) : "<br>not read yet";
+        showTip(tip, fig, e, body);
+      });
+      hit.addEventListener("mouseleave", function () { tip.hidden = true; });
+    });
+
+    drawTable();
+    document.getElementById("steptext").innerHTML = stepText();
+    document.getElementById("steplab").textContent = t + " of " + T + " blocks read";
+    document.getElementById("step").value = String(t);
+    document.getElementById("prev").disabled = t === 0;
+    document.getElementById("next").disabled = t === T;
+  }
+
+  function drawTable() {
+    var tb = document.getElementById("state-body"), t = sim.step;
+    tb.innerHTML = "";
+    cur.steps.forEach(function (s, j) {
+      var done = j < t, tr = document.createElement("tr");
+      tr.className = j === t - 1 ? "now" : (done ? "" : "later");
+      var cells = [
+        [String(j + 1), ""], [(s.lo + 1) + "–" + s.hi, "mono"],
+        [done ? fmt(s.mt) : "—", "num mono"], [done ? fmt(s.m) : "—", "num mono"],
+        [done ? (j === 0 ? "0" : fmt(s.a, 3)) : "—", "num mono"], [done ? fmt(s.l, 4) : "—", "num mono"],
+        [done ? "(" + fmt(s.O[0], 3) + ", " + fmt(s.O[1], 3) + ")" : "—", "mono"]
+      ];
+      cells.forEach(function (c) { var td = document.createElement("td"); td.textContent = c[0]; if (c[1]) td.className = c[1]; tr.appendChild(td); });
+      tb.appendChild(tr);
+    });
+  }
+
+  function ex(a, b) { return "e<sup>" + a + " − " + b + "</sup>"; }
+  function stepText() {
+    var t = sim.step;
+    if (t === 0) return "Nothing read yet. The state starts at <var>m</var> = −∞, <var>ℓ</var> = 0, O = (0, 0), as in Algorithm 1 line 2.";
+    var s = cur.steps[t - 1];
+    if (t === 1) return "Block 1 sets the running max to its own largest score, <var>m</var> = " + fmt(s.m) + ". The old state is empty. Thus its factor α = e<sup>−∞</sup> = 0 changes nothing.";
+    if (s.a < 1) return "Block " + t + " raises the max from " + fmt(s.mOld) + " to " + fmt(s.m) + ". Thus the old sum and the old output shrink by α = " + ex(fmt(s.mOld), fmt(s.m)) + " = " + fmt(s.a, 3) + ". The dashed outlines show the earlier weights before the shrink. Then the block adds its own sum at full scale.";
+    return "Block " + t + " does not raise the max: its largest score " + fmt(s.mt) + " is not above <var>m</var> = " + fmt(s.m) + ". Thus α = 1 and the old state stays. The block joins with the factor " + ex(fmt(s.mt), fmt(s.m)) + " = " + fmt(s.b, 3) + ".";
+  }
+
+  function drawResult() {
+    var steps = cur.steps, fin = steps[steps.length - 1], r = cur.ref;
+    var owns = steps.map(function (s) { return s.own; });
+    var rev = foldReverse(owns), tree = foldTree(owns);
+    var n32 = naive32(cur.keys), o32 = online32(cur.keys);
+    var items = [
+      "Online, " + steps.length + " block" + (steps.length > 1 ? "s" : "") + ": <span class=\"mono\"><var>ℓ</var> = " + fmt(fin.l, 6) + ", O = (" + fmt(fin.O[0], 6) + ", " + fmt(fin.O[1], 6) + ")</span>. Three-pass safe softmax: <span class=\"mono\"><var>ℓ</var> = " + fmt(r.l, 6) + ", O = (" + fmt(r.O[0], 6) + ", " + fmt(r.O[1], 6) + ")</span>. Largest difference in O: <span class=\"mono\">" + fmtE(diffO(fin.O, r.O)) + "</span>, which is float64 rounding.",
+      steps.length > 1
+        ? "Other merge orders, with the same blocks: reverse order differs from left to right by <span class=\"mono\">" + fmtE(diffO(rev.O, fin.O)) + "</span>, and a pairwise tree by <span class=\"mono\">" + fmtE(diffO(tree.O, fin.O)) + "</span>."
+        : "With one block there is nothing to merge. Pick a smaller block size to compare merge orders.",
+      "In float32, rounded after every operation: the plain sum Σ e<sup><var>x</var></sup> is <span class=\"mono\">" + (isFinite(n32) ? fmt(n32, 1) : "∞") + "</span>" + (isFinite(n32) ? ", which is fine at these scores. Tick “Add 100” to make it overflow." : ", so every output would be ∞ / ∞ = NaN.") + " The online sum is <span class=\"mono\"><var>ℓ</var> = " + fmt(o32.d, 4) + "</span> with <span class=\"mono\"><var>m</var> = " + fmt(o32.m) + "</span>" +
+        (sim.shift ? ". Without the shift it is <span class=\"mono\"><var>ℓ</var> = " + fmt(online32(cur.keys0).d, 4) + "</span>, because softmax ignores a constant added to every score." : ".")
+    ];
+    var ul = document.getElementById("result");
+    ul.innerHTML = "";
+    items.forEach(function (h) { var li = document.createElement("li"); li.innerHTML = h; ul.appendChild(li); });
+  }
+
+  function setStep(t) { sim.step = Math.max(0, Math.min(cur.steps.length, t)); tip.hidden = true; draw(); }
+  document.getElementById("step").addEventListener("input", function (e) { setStep(parseInt(e.target.value, 10)); });
+  document.getElementById("prev").addEventListener("click", function () { setStep(sim.step - 1); });
+  document.getElementById("next").addEventListener("click", function () { setStep(sim.step + 1); });
+  document.getElementById("bc").addEventListener("change", function (e) { sim.bc = parseInt(e.target.value, 10); recompute(); });
+  document.getElementById("order").addEventListener("change", function (e) { sim.order = e.target.value; recompute(); });
+  document.getElementById("shift").addEventListener("change", function (e) { sim.shift = e.target.checked; recompute(); });
+  document.getElementById("reseed").addEventListener("click", function () { sim.seed += 1; recompute(); });
+
+  // Restore controls the browser kept across a reload, then draw.
+  sim.bc = parseInt(document.getElementById("bc").value, 10) || 4;
+  sim.order = document.getElementById("order").value || "drawn";
+  sim.shift = document.getElementById("shift").checked;
+  recompute();
+
+  // Linked terms: hovering or focusing a name lights up every element with the same data-ref.
+  function linkRefs() {
+    var all = document.querySelectorAll("[data-ref]");
+    function set(ref, on) {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-ref="' + ref + '"]'), function (n) { n.classList.toggle("ref-on", on); });
+    }
+    Array.prototype.forEach.call(all, function (n) {
+      var ref = n.getAttribute("data-ref");
+      if (n.tagName.toLowerCase() === "span" && !n.hasAttribute("tabindex")) n.setAttribute("tabindex", "0");
+      ["mouseenter", "focus"].forEach(function (ev) { n.addEventListener(ev, function () { set(ref, true); }); });
+      ["mouseleave", "blur"].forEach(function (ev) { n.addEventListener(ev, function () { set(ref, false); }); });
+    });
+  }
+  linkRefs();
+
+  // Self-check: overflow and overlapping SVG labels FAIL; SVG text under 10 px on screen WARNs.
+  // Result: a console summary, and data-selfcheck="pass|fail" on the root element. With #selfcheck in the URL,
+  // offenders get a dashed outline and a summary bar appears.
+  function selfCheck() {
+    var found = [];
+    function add(el, kind, msg) { found.push({ el: el, kind: kind, msg: msg }); }
+    if (document.documentElement.scrollWidth > window.innerWidth + 1) add(document.body, "fail", "page scrolls sideways");
+    Array.prototype.forEach.call(document.querySelectorAll(".wrap *"), function (el) {
+      if (el.closest("svg") || el.closest(".scroll") || el.closest(".tbl-wrap") || el.closest(".tip")) return;
+      var cs = getComputedStyle(el);
+      if (cs.overflowX === "auto" || cs.overflowX === "scroll" || cs.display === "inline") return;
+      // 3px tolerance: range thumbs and focus rings poke out by 1-2px without being visible.
+      if (el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 3) add(el, "fail", "content overflows its box by " + (el.scrollWidth - el.clientWidth) + "px");
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".wrap svg"), function (svg) {
+      var vb = svg.viewBox && svg.viewBox.baseVal, r = svg.getBoundingClientRect();
+      var scale = vb && vb.width ? r.width / vb.width : 1;
+      var texts = Array.prototype.filter.call(svg.querySelectorAll("text"), function (t) {
+        var b = t.getBoundingClientRect(); return t.textContent.trim() && b.width > 0 && b.height > 0;
+      });
+      var boxes = texts.map(function (t) { return t.getBoundingClientRect(); });
+      var small = [], minPx = Infinity, minText = "";
+      texts.forEach(function (t, i) {
+        var px = parseFloat(getComputedStyle(t).fontSize) * scale;
+        if (px < 10) { small.push(t); if (px < minPx) { minPx = px; minText = t.textContent.trim().slice(0, 30); } }
+        for (var j = i + 1; j < boxes.length; j++) {
+          var a = boxes[i], b = boxes[j];
+          var w = Math.min(a.right, b.right) - Math.max(a.left, b.left), h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (w > 2 && h > 2) add(t, "fail", "label overlaps \"" + texts[j].textContent.trim().slice(0, 24) + "\"");
+        }
+      });
+      // One warning per figure, not per label.
+      if (small.length) {
+        add(svg, "warn", small.length + " label(s) render under 10px, smallest " + minPx.toFixed(1) + "px (\"" + minText + "\")");
+        if (location.hash === "#selfcheck") small.forEach(function (t) { t.classList.add("sc-bad"); });
+      }
+    });
+    var fails = found.filter(function (f) { return f.kind === "fail"; }).length, warns = found.length - fails;
+    document.documentElement.setAttribute("data-selfcheck", fails ? "fail" : "pass");
+    var summary = "selfCheck " + (fails ? "FAIL" : "PASS") + " at " + window.innerWidth + "px: " + fails + " fail, " + warns + " warn";
+    (fails ? console.warn : console.info)(summary, found.map(function (f) { return f.kind + ": " + f.msg; }));
+    // The same report as hidden text, so a headless browser's DOM dump can read it.
+    var rep = document.getElementById("selfcheck-report") || document.body.appendChild(document.createElement("pre"));
+    rep.id = "selfcheck-report"; rep.hidden = true;
+    rep.textContent = [summary].concat(found.map(function (f) {
+      var tag = f.el.tagName.toLowerCase() + (f.el.id ? "#" + f.el.id : "") + (f.el.getAttribute && f.el.getAttribute("class") ? "." + f.el.getAttribute("class").split(" ")[0] : "");
+      return f.kind.toUpperCase() + " " + tag + ": " + f.msg;
+    })).join("\n");
+    if (location.hash === "#selfcheck") {
+      found.forEach(function (f) { f.el.classList.add("sc-bad"); f.el.setAttribute("title", f.msg); });
+      var bar = document.querySelector(".sc-bar") || document.body.appendChild(document.createElement("div"));
+      bar.className = "sc-bar"; bar.textContent = summary + (found.length ? " (hover the outlined items)" : "");
+    }
+    return found;
+  }
+  var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  fontsReady.then(function () { setTimeout(selfCheck, 60); });
+  window.addEventListener("hashchange", function () { if (location.hash === "#selfcheck") selfCheck(); });
+})();
+</script>
+</body>
+</html>

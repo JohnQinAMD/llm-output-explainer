@@ -1,0 +1,277 @@
+<title>REPLACE: Name Of The Thing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- REPLACE the families with a pairing chosen for this subject (display + body + mono). -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: REPLACE with this page's one-line layout concept. */
+/* Token names are the contract the rest of the CSS and the SVG classes use. Re-pick the values for each page. */
+:root {
+  --bg: #F3F5F8; --panel: #FFFFFF; --ink: #121821; --ink-2: #47505E; --muted: #687182;
+  --line: #DCE1E8; --line-strong: #BFC7D2;
+  --accent: #2a78d6; --accent-ink: #1c5cab; --accent-wash: #E7EFFA;   /* the new path */
+  --hot: #eb6834; --hot-ink: #B2461A; --hot-wash: #FCEBE3;            /* what changed / what breaks */
+  --mark-neutral: #B3BAC5; --code-bg: #E9EDF2;
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1115; --panel: #151A21; --ink: #E7EBF1; --ink-2: #A9B2BF; --muted: #848E9C;
+    --line: #262D37; --line-strong: #39424F; --accent: #3987e5; --accent-ink: #84B4F2; --accent-wash: #16253A;
+    --hot: #d95926; --hot-ink: #F2905F; --hot-wash: #33201A; --mark-neutral: #4C5563; --code-bg: #1D232C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1115; --panel: #151A21; --ink: #E7EBF1; --ink-2: #A9B2BF; --muted: #848E9C;
+  --line: #262D37; --line-strong: #39424F; --accent: #3987e5; --accent-ink: #84B4F2; --accent-wash: #16253A;
+  --hot: #d95926; --hot-ink: #F2905F; --hot-wash: #33201A; --mark-neutral: #4C5563; --code-bg: #1D232C;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 17px/1.62 var(--font-body); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 72px; }
+.prose { max-width: 68ch; }
+a { color: var(--accent-ink); text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+code { background: var(--code-bg); padding: 0.08em 0.36em; border-radius: 4px; overflow-wrap: anywhere; }
+.eyebrow { font: 500 12.5px/1.4 var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; overflow-wrap: anywhere; }
+h1 { font-family: var(--font-display); font-weight: 820; font-stretch: 72%; font-size: clamp(38px, 6.4vw, 64px); line-height: 0.98; margin: 0 0 20px; text-wrap: balance; max-width: 16ch; }
+h2 { font-family: var(--font-display); font-weight: 780; font-stretch: 78%; font-size: clamp(28px, 4vw, 36px); line-height: 1.05; margin: 0 0 16px; text-wrap: balance; }
+h3 { font: 600 18px/1.3 var(--font-body); margin: 32px 0 10px; }
+section { border-top: 1px solid var(--line); padding-block: 52px 8px; margin-top: 48px; }
+figure { margin: 24px 0 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; position: relative; min-width: 0; }
+figcaption { font-size: 14.5px; line-height: 1.55; color: var(--ink-2); margin-top: 14px; max-width: 78ch; }
+.scroll { overflow-x: auto; }
+.scroll > svg { display: block; width: 100%; height: auto; }
+.scroll > svg.wide { min-width: 860px; }   /* pipeline diagrams */
+.scroll > svg.mid { min-width: 620px; }    /* charts */
+
+/* SVG vocabulary: text and shapes take color from tokens only. */
+.sv-title { font: 600 13px var(--font-body); fill: var(--ink); }
+.sv-mono { font: 600 12.5px var(--font-mono); fill: var(--ink); }
+.sv-sub { font: 400 11.5px var(--font-body); fill: var(--ink-2); }
+.sv-lab { font: 400 11px var(--font-mono); fill: var(--muted); }
+.sv-head { font: 500 11px var(--font-mono); fill: var(--muted); letter-spacing: 0.06em; }
+.sv-hot { fill: var(--hot-ink); font-weight: 600; }
+.sv-tag { font: 600 10.5px var(--font-mono); fill: #FFFFFF; }
+.bx { fill: var(--bg); stroke: var(--line-strong); }
+.bx-new { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 1.2; }
+.bx-store { fill: var(--code-bg); stroke: var(--line-strong); }
+.bx-bad { fill: var(--hot-wash); stroke: var(--hot); stroke-width: 1.2; }
+.tag { fill: var(--accent); }
+.ln { stroke: var(--ink-2); stroke-width: 1.4; fill: none; }
+.ln-hot { stroke: var(--hot); stroke-width: 1.8; fill: none; }
+.mk { fill: var(--ink-2); } .mk-hot { fill: var(--hot); }
+
+/* tables, legends, tooltip */
+.tbl-wrap { overflow-x: auto; margin: 14px 0 6px; }
+table.tbl { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+.tbl th, .tbl td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.tbl th { font: 500 12px var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.tbl .num { text-align: right; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 8px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; vertical-align: -1px; margin-right: 6px; }
+.sw.acc { background: var(--accent); } .sw.hot { background: var(--hot); } .sw.neu { background: var(--mark-neutral); }
+.tip { position: absolute; z-index: 5; pointer-events: none; background: var(--ink); color: var(--panel); font: 500 12.5px/1.45 var(--font-body); padding: 7px 10px; border-radius: 6px; max-width: 260px; }
+/* verification strip: the claim ledger's counts */
+.verify { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin: 24px 0 0; font: 500 13px var(--font-body); }
+.chip { display: inline-flex; gap: 6px; align-items: center; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line-strong); background: var(--panel); font-variant-numeric: tabular-nums; }
+.chip b { font-weight: 600; }
+.chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--mark-neutral); }
+.chip.ok::before { background: var(--accent); } .chip.fix::before { background: var(--hot); }
+.verify details { flex-basis: 100%; font-size: 14.5px; color: var(--ink-2); }
+.verify summary { cursor: pointer; color: var(--accent-ink); }
+.verify li { margin: 6px 0; }
+/* linked terms: prose <span data-ref> <-> svg <g data-ref> */
+span[data-ref] { border-bottom: 1px dotted var(--accent); cursor: default; }
+span[data-ref].ref-on { background: var(--accent-wash); border-radius: 3px; }
+svg g.ref-on > rect, svg rect.ref-on { stroke: var(--accent); stroke-width: 2.4; }
+/* self-check overlay, shown only with #selfcheck in the URL */
+.sc-bad { outline: 2px dashed var(--hot) !important; outline-offset: 1px; }
+svg text.sc-bad { fill: var(--hot) !important; }
+.sc-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px)); font: 500 13px var(--font-mono); background: var(--ink); color: var(--panel); }
+@media (max-width: 640px) { body { font-size: 16px; } .wrap { padding-inline: 16px; } figure { padding: 14px; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">owner/repo · PR <a href="https://github.com/OWNER/REPO/pull/N">#N</a> · AREA</p>
+    <h1>REPLACE: what the change does</h1>
+    <p class="prose">REPLACE: lede. Wrap the few names the reader must map to the figure: the <span data-ref="k2">cache writer</span>.</p>
+    <!-- Counts come from the claim ledger. Unsupported claims were cut, so they have no chip. -->
+    <div class="verify" aria-label="What was checked">
+      <span class="chip ok"><b>0</b> verified</span>
+      <span class="chip fix"><b>0</b> corrected</span>
+      <span class="chip"><b>0</b> unverifiable, labeled</span>
+      <details><summary>What was corrected</summary>
+        <ul><li><b>Believed:</b> REPLACE. <b>True:</b> REPLACE. <span class="mono">path/file.py:123</span></li></ul>
+      </details>
+    </div>
+  </header>
+
+  <section id="pipeline">
+    <p class="eyebrow">path/to/orchestration.py · function</p>
+    <h2>Two paths for one call</h2>
+    <figure>
+      <div class="scroll">
+        <svg class="wide" viewBox="0 0 1060 386" role="img" aria-label="REPLACE: the claim this diagram shows">
+          <defs>
+            <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M0,0 L8,4 L0,8 z"/></marker>
+            <marker id="ahh" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-hot" d="M0,0 L8,4 L0,8 z"/></marker>
+          </defs>
+          <!-- figure rules: references/html-page.md -->
+          <g data-ref="k2"><rect class="bx-new" x="354" y="222" width="200" height="88" rx="7"/><text class="sv-mono" x="454" y="270" text-anchor="middle">REPLACE stage</text></g>
+        </svg>
+      </div>
+      <figcaption>REPLACE: which baseline, and the differences.</figcaption>
+    </figure>
+  </section>
+
+  <section id="measure">
+    <h2>Measurements</h2>
+    <figure id="chart-fig">
+      <div class="legend"><span><i class="sw neu"></i>before</span><span><i class="sw acc"></i>after</span></div>
+      <div class="scroll"><svg class="mid" id="chart" viewBox="0 0 640 270" role="img" aria-label="REPLACE"></svg></div>
+      <figcaption>REPLACE: the one claim this chart shows, with its conditions.</figcaption>
+    </figure>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function el(name, attrs, parent) {
+    var n = document.createElementNS(SVGNS, name);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function makeTip(fig) { var t = document.createElement("div"); t.className = "tip"; t.hidden = true; fig.appendChild(t); return t; }
+  function showTip(tip, fig, evt, html) {
+    tip.innerHTML = html; tip.hidden = false;
+    var r = fig.getBoundingClientRect(), x = evt.clientX - r.left + 14, y = evt.clientY - r.top + 14;
+    if (x + tip.offsetWidth > r.width - 8) x = evt.clientX - r.left - tip.offsetWidth - 14;
+    tip.style.left = Math.max(4, x) + "px"; tip.style.top = y + "px";
+  }
+  // Bar with 4px rounded top, anchored to the baseline.
+  function barPath(x, w, top, base, r) {
+    r = Math.min(r, w / 2, base - top);
+    return "M" + x + "," + base + "V" + (top + r) + "Q" + x + "," + top + " " + (x + r) + "," + top +
+      "H" + (x + w - r) + "Q" + (x + w) + "," + top + " " + (x + w) + "," + (top + r) + "V" + base + "Z";
+  }
+
+  // Grouped before/after bars. rows: [{label, a, b}], unit: "µs".
+  function groupedBars(svg, fig, rows, opts) {
+    var W = 640, L = 52, R = 16, T = 18, B = 222, yMax = opts.yMax, step = opts.step, bw = 40;
+    var tip = makeTip(fig);
+    function y(v) { return B - (v / yMax) * (B - T); }
+    for (var v = 0; v <= yMax; v += step) {
+      el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: v === 0 ? "var(--line-strong)" : "var(--line)" }, svg);
+      el("text", { x: L - 8, y: y(v) + 4, "text-anchor": "end", class: "sv-lab" }, svg).textContent = v;
+    }
+    el("text", { x: L + 4, y: T - 6, "text-anchor": "start", class: "sv-lab" }, svg).textContent = opts.unit;
+    var cw = (W - L - R) / rows.length;
+    rows.forEach(function (d, i) {
+      var cx = L + cw * (i + 0.5);
+      [["a", cx - bw - 1, "var(--mark-neutral)", opts.aName], ["b", cx + 1, "var(--accent)", opts.bName]].forEach(function (s) {
+        var val = d[s[0]], x = s[1];
+        el("path", { d: barPath(x, bw, y(val), B, 4), fill: s[2] }, svg);
+        var hit = el("rect", { x: x - 2, y: T, width: bw + 4, height: B - T, fill: "transparent" }, svg);
+        hit.addEventListener("mousemove", function (e) { showTip(tip, fig, e, "<b>" + d.label + "</b><br>" + s[3] + ": " + val + " " + opts.unit); });
+        hit.addEventListener("mouseleave", function () { tip.hidden = true; });
+      });
+      el("text", { x: cx, y: B + 20, "text-anchor": "middle", class: "sv-lab" }, svg).textContent = d.label;
+    });
+  }
+
+  // Placeholder numbers; replace with real ones and repeat them in a table under the chart.
+  groupedBars(document.getElementById("chart"), document.getElementById("chart-fig"),
+    [{ label: "small input", a: 8, b: 6 }, { label: "large input", a: 40, b: 12 }],
+    { yMax: 50, step: 10, unit: "ms", aName: "before", bName: "after" });
+
+  // Seeded PRNG for simulations, so every reader sees the same first view.
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  void mulberry32; void reduceMotion;
+
+  // Linked terms: hovering or focusing a name lights up every element with the same data-ref.
+  function linkRefs() {
+    var all = document.querySelectorAll("[data-ref]");
+    function set(ref, on) {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-ref="' + ref + '"]'), function (n) { n.classList.toggle("ref-on", on); });
+    }
+    Array.prototype.forEach.call(all, function (n) {
+      var ref = n.getAttribute("data-ref");
+      if (n.tagName.toLowerCase() === "span" && !n.hasAttribute("tabindex")) n.setAttribute("tabindex", "0");
+      ["mouseenter", "focus"].forEach(function (ev) { n.addEventListener(ev, function () { set(ref, true); }); });
+      ["mouseleave", "blur"].forEach(function (ev) { n.addEventListener(ev, function () { set(ref, false); }); });
+    });
+  }
+  linkRefs();
+
+  // Self-check: overflow and overlapping SVG labels FAIL; SVG text under 10 px on screen WARNs.
+  // Result: a console summary, and data-selfcheck="pass|fail" on the root element. With #selfcheck in the URL,
+  // offenders get a dashed outline and a summary bar appears.
+  function selfCheck() {
+    var found = [];
+    function add(el, kind, msg) { found.push({ el: el, kind: kind, msg: msg }); }
+    if (document.documentElement.scrollWidth > window.innerWidth + 1) add(document.body, "fail", "page scrolls sideways");
+    Array.prototype.forEach.call(document.querySelectorAll(".wrap *"), function (el) {
+      if (el.closest("svg") || el.closest(".scroll") || el.closest(".tbl-wrap") || el.closest(".tip")) return;
+      var cs = getComputedStyle(el);
+      if (cs.overflowX === "auto" || cs.overflowX === "scroll" || cs.display === "inline") return;
+      // 3px tolerance: range thumbs and focus rings poke out by 1-2px without being visible.
+      if (el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 3) add(el, "fail", "content overflows its box by " + (el.scrollWidth - el.clientWidth) + "px");
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".wrap svg"), function (svg) {
+      var vb = svg.viewBox && svg.viewBox.baseVal, r = svg.getBoundingClientRect();
+      var scale = vb && vb.width ? r.width / vb.width : 1;
+      var texts = Array.prototype.filter.call(svg.querySelectorAll("text"), function (t) {
+        var b = t.getBoundingClientRect(); return t.textContent.trim() && b.width > 0 && b.height > 0;
+      });
+      var boxes = texts.map(function (t) { return t.getBoundingClientRect(); });
+      var small = [], minPx = Infinity, minText = "";
+      texts.forEach(function (t, i) {
+        var px = parseFloat(getComputedStyle(t).fontSize) * scale;
+        if (px < 10) { small.push(t); if (px < minPx) { minPx = px; minText = t.textContent.trim().slice(0, 30); } }
+        for (var j = i + 1; j < boxes.length; j++) {
+          var a = boxes[i], b = boxes[j];
+          var w = Math.min(a.right, b.right) - Math.max(a.left, b.left), h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (w > 2 && h > 2) add(t, "fail", "label overlaps \"" + texts[j].textContent.trim().slice(0, 24) + "\"");
+        }
+      });
+      // One warning per figure, not per label.
+      if (small.length) {
+        add(svg, "warn", small.length + " label(s) render under 10px, smallest " + minPx.toFixed(1) + "px (\"" + minText + "\")");
+        if (location.hash === "#selfcheck") small.forEach(function (t) { t.classList.add("sc-bad"); });
+      }
+    });
+    var fails = found.filter(function (f) { return f.kind === "fail"; }).length, warns = found.length - fails;
+    document.documentElement.setAttribute("data-selfcheck", fails ? "fail" : "pass");
+    var summary = "selfCheck " + (fails ? "FAIL" : "PASS") + " at " + window.innerWidth + "px: " + fails + " fail, " + warns + " warn";
+    (fails ? console.warn : console.info)(summary, found.map(function (f) { return f.kind + ": " + f.msg; }));
+    // The same report as hidden text, so a headless browser's DOM dump can read it.
+    var rep = document.getElementById("selfcheck-report") || document.body.appendChild(document.createElement("pre"));
+    rep.id = "selfcheck-report"; rep.hidden = true;
+    rep.textContent = [summary].concat(found.map(function (f) {
+      var tag = f.el.tagName.toLowerCase() + (f.el.id ? "#" + f.el.id : "") + (f.el.getAttribute && f.el.getAttribute("class") ? "." + f.el.getAttribute("class").split(" ")[0] : "");
+      return f.kind.toUpperCase() + " " + tag + ": " + f.msg;
+    })).join("\n");
+    if (location.hash === "#selfcheck") {
+      found.forEach(function (f) { f.el.classList.add("sc-bad"); f.el.setAttribute("title", f.msg); });
+      var bar = document.querySelector(".sc-bar") || document.body.appendChild(document.createElement("div"));
+      bar.className = "sc-bar"; bar.textContent = summary + (found.length ? " (hover the outlined items)" : "");
+    }
+    return found;
+  }
+  var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  fontsReady.then(function () { setTimeout(selfCheck, 60); });
+  window.addEventListener("hashchange", function () { if (location.hash === "#selfcheck") selfCheck(); });
+})();
+</script>
