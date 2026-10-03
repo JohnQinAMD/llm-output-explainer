@@ -22,6 +22,34 @@ A Codex and Claude Code skill that explains code, papers, pull requests and resu
 
 The idea comes from [Andrej Karpathy's post](https://x.com/karpathy/status/2105819303471976479). People spend more and more time reading what language models produce. Writing in a controlled language, drawing diagrams, building interactive pages, and making explainer videos can make that output easier to understand.
 
+## See it in action
+
+### Step through the real algorithm
+
+The simulator runs the FlashAttention update for one query row. Move through the blocks to see the running maximum, the rescaled weights and the partial output change together.
+
+<p align="center">
+  <a href="https://johnqinamd.github.io/llm-output-explainer/"><img src="media/simulator.gif" alt="Online softmax simulator stepping through four blocks and rescaling earlier weights when the running maximum rises" width="900"></a>
+</p>
+
+### One page, two themes
+
+The same tokens and diagrams work in light and dark mode. The page follows the browser preference, and it also supports an explicit `data-theme` override.
+
+<p align="center">
+  <img src="media/theme-comparison.png" alt="Online softmax explainer shown side by side in light and dark themes" width="100%">
+</p>
+
+### The page checks itself
+
+Open any generated page with `#selfcheck` to test horizontal overflow, overlapping SVG labels and undersized SVG text. This capture first shows a passing page, then injects an intentional 1,450 px overflow at capture time so you can see the real checker find and outline it. The published demo stays unchanged.
+
+<p align="center">
+  <a href="https://johnqinamd.github.io/llm-output-explainer/#selfcheck"><img src="media/selfcheck.gif" alt="Self-check changing from PASS to FAIL after an intentional capture-time overflow is injected and outlined" width="900"></a>
+</p>
+
+Try the full interactive page: [**open the GitHub Pages demo →**](https://johnqinamd.github.io/llm-output-explainer/)
+
 ## Four formats
 
 | Format | Use it when | Output |
@@ -97,7 +125,7 @@ skills/explain/
     └── pr_facts.sh             live state of a GitHub pull request
 ```
 
-`docs/index.html` is the live demo page. GitHub Pages serves it, and you can also open it directly in a browser.
+`docs/index.html` is the live demo page. GitHub Pages serves it, and you can also open it directly in a browser. `scripts/capture_readme_assets.py` records the README images from that page, so the showcase stays tied to the real implementation.
 
 ## Requirements
 
