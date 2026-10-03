@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://johnqinamd.github.io/llm-output-explainer/"><b>▶ Live demo</b></a> &nbsp;·&nbsp;
+  <a href="https://johnqinamd.github.io/llm-output-explainer/chunked-prefill-audit.html"><b>▶ Output-audit demo</b></a> &nbsp;·&nbsp;
   <a href="#install">Install</a> &nbsp;·&nbsp;
   <a href="#four-formats">Formats</a> &nbsp;·&nbsp;
   <a href="#what-it-adds">What it adds</a>
@@ -23,6 +23,16 @@ A Codex and Claude Code skill that explains code, papers, pull requests and resu
 The idea comes from [Andrej Karpathy's post](https://x.com/karpathy/status/2105819303471976479). People spend more and more time reading what language models produce. Writing in a controlled language, drawing diagrams, building interactive pages, and making explainer videos can make that output easier to understand.
 
 ## See it in action
+
+### Audit a confident LLM answer
+
+The main demo audits an LLM recommendation for a real vLLM chunked-prefill performance report. It checks six claims against the reported measurements and current documentation, corrects three claims, and refuses to guess one missing metric definition.
+
+<p align="center">
+  <a href="https://johnqinamd.github.io/llm-output-explainer/chunked-prefill-audit.html"><img src="media/chunked-prefill-audit.png" alt="Static audit of an LLM answer about vLLM chunked prefill, showing six checked claims and their verdicts" width="100%"></a>
+</p>
+
+[**Read the static chunked-prefill audit →**](https://johnqinamd.github.io/llm-output-explainer/chunked-prefill-audit.html)
 
 ### Step through the real algorithm
 
@@ -48,7 +58,7 @@ Open any generated page with `#selfcheck` to test horizontal overflow, overlappi
   <a href="https://johnqinamd.github.io/llm-output-explainer/#selfcheck"><img src="media/selfcheck.gif" alt="Self-check changing from PASS to FAIL after an intentional capture-time overflow is injected and outlined" width="900"></a>
 </p>
 
-Try the full interactive page: [**open the GitHub Pages demo →**](https://johnqinamd.github.io/llm-output-explainer/)
+Try the secondary interactive page: [**open the Online Softmax demo →**](https://johnqinamd.github.io/llm-output-explainer/)
 
 ## Four formats
 
@@ -69,7 +79,19 @@ The skill picks a format from the request. If you name one ("explain in STE", "m
 - **Pages check themselves.** The starter page includes `selfCheck()`, which flags overflow, overlapping labels and text that is too small, at any screen width. Add `#selfcheck` to the URL to outline the problems. `scripts/check_page.py` checks the page before you publish it.
 - **Written for a reader.** The skill writes differently for you, for a peer reviewer, or for a manager, and it can apply your own rules for each audience.
 
-## Live demo
+## Demos
+
+[**Chunked prefill audit**](https://johnqinamd.github.io/llm-output-explainer/chunked-prefill-audit.html) is the primary demo. It starts with an illustrative LLM answer about a real vLLM performance report, then:
+
+- splits the answer into six independently checkable claims.
+- preserves the benchmark's scope instead of generalizing one 8 × H20 result.
+- shows the TTFT–P99 ITL trade-off as a frontier, not a single winning configuration.
+- distinguishes a contradicted claim from a claim that cannot be resolved without raw metric definitions.
+- rewrites the answer as an operator-ready recommendation with explicit missing evidence.
+
+Its source is [`docs/chunked-prefill-audit.html`](docs/chunked-prefill-audit.html). It is a static report; no model or benchmark runs in the page.
+
+### Online Softmax
 
 [**Online softmax**](https://johnqinamd.github.io/llm-output-explainer/) is a page the skill made in a test, from the FlashAttention and Milakov & Gimelshein papers. In the browser you can:
 
@@ -125,7 +147,7 @@ skills/explain/
     └── pr_facts.sh             live state of a GitHub pull request
 ```
 
-`docs/index.html` is the live demo page. GitHub Pages serves it, and you can also open it directly in a browser. `scripts/capture_readme_assets.py` records the README images from that page, so the showcase stays tied to the real implementation.
+`docs/chunked-prefill-audit.html` is the primary static demo, and `docs/index.html` is the Online Softmax demo. GitHub Pages serves both. `scripts/capture_readme_assets.py` records the README images from those pages, so the showcase stays tied to the real implementation.
 
 ## Requirements
 

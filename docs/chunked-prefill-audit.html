@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chunked Prefill Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap">
+<style>
+:root {
+  --bg:#F2F0EA; --paper:#FCFBF7; --ink:#181A1F; --ink2:#4E535D; --muted:#747A84;
+  --line:#D8D4CB; --line2:#B8B3A9; --blue:#175CD3; --blue-w:#E8F0FF;
+  --red:#B42318; --red-w:#FDECEA; --amber:#9A5B00; --amber-w:#FFF3D6;
+  --green:#157044; --green-w:#E5F5EC; --violet:#6E3CBC; --grid:#E5E1D8;
+  --display:"Manrope",system-ui,sans-serif; --body:"Newsreader",Georgia,serif;
+  --mono:"DM Mono",ui-monospace,Menlo,Consolas,monospace; color-scheme:light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#101216; --paper:#171A20; --ink:#F1F0EC; --ink2:#BCC1CB; --muted:#8D949F;
+    --line:#2B3039; --line2:#454C58; --blue:#76A7FF; --blue-w:#172641;
+    --red:#FF8A80; --red-w:#3A1D1C; --amber:#F2B85B; --amber-w:#352714;
+    --green:#66D19A; --green-w:#163125; --violet:#B89AF3; --grid:#22262D; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#101216; --paper:#171A20; --ink:#F1F0EC; --ink2:#BCC1CB; --muted:#8D949F;
+  --line:#2B3039; --line2:#454C58; --blue:#76A7FF; --blue-w:#172641;
+  --red:#FF8A80; --red-w:#3A1D1C; --amber:#F2B85B; --amber-w:#352714;
+  --green:#66D19A; --green-w:#163125; --violet:#B89AF3; --grid:#22262D; color-scheme:dark;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; background:var(--bg); color:var(--ink); font:400 18px/1.6 var(--body); }
+a { color:var(--blue); text-underline-offset:3px; }
+.wrap { width:min(1180px,calc(100% - 40px)); margin:auto; padding:28px 0 80px; }
+.nav { display:flex; justify-content:space-between; gap:20px; align-items:center; border-bottom:1px solid var(--line); padding-bottom:16px; font:500 12px/1.4 var(--mono); color:var(--muted); }
+.nav a { text-decoration:none; }
+.nav .right { text-align:right; }
+header { padding:70px 0 50px; }
+.eyebrow { margin:0 0 14px; color:var(--muted); font:500 12px/1.45 var(--mono); letter-spacing:.075em; text-transform:uppercase; }
+h1,h2,h3 { font-family:var(--display); }
+h1 { max-width:930px; margin:0; font-size:clamp(43px,7vw,82px); line-height:.99; letter-spacing:-.045em; font-weight:800; text-wrap:balance; }
+h1 em { color:var(--red); font-style:normal; }
+.lede { max-width:780px; margin:26px 0 0; font-size:22px; line-height:1.48; color:var(--ink2); }
+.facts { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:42px; }
+.fact { border-top:2px solid var(--ink); padding-top:10px; }
+.fact b { display:block; font:800 27px/1.1 var(--display); }
+.fact span { display:block; margin-top:5px; color:var(--ink2); font-size:15px; line-height:1.35; }
+.fact code { display:block; margin-top:7px; color:var(--muted); font:400 11px/1.45 var(--mono); overflow-wrap:anywhere; }
+section { border-top:1px solid var(--line); padding:58px 0 16px; margin-top:26px; }
+h2 { margin:0 0 14px; font-size:clamp(29px,4vw,43px); line-height:1.08; letter-spacing:-.025em; }
+h3 { margin:0 0 10px; font-size:19px; line-height:1.3; }
+.intro { max-width:760px; margin:0 0 28px; color:var(--ink2); }
+.paper { background:var(--paper); border:1px solid var(--line); border-radius:10px; }
+.draft { display:grid; grid-template-columns:170px 1fr; overflow:hidden; }
+.draft-label { padding:24px 20px; border-right:1px solid var(--line); background:var(--red-w); }
+.draft-label strong { display:block; color:var(--red); font:700 13px var(--display); text-transform:uppercase; letter-spacing:.05em; }
+.draft-label span { display:block; margin-top:8px; color:var(--ink2); font:400 11px/1.5 var(--mono); }
+.draft-copy { padding:30px 34px; font-size:22px; line-height:1.62; }
+.claim { border-bottom:2px solid var(--line2); }
+.claim sup { display:inline-flex; align-items:center; justify-content:center; width:24px; height:19px; margin-left:4px; border-radius:9px; color:var(--paper); background:var(--ink2); font:500 10px var(--mono); vertical-align:4px; }
+.claim.bad { background:linear-gradient(transparent 68%,var(--red-w) 68%); border-color:var(--red); }
+.claim.bad sup { background:var(--red); }
+.claim.ok { background:linear-gradient(transparent 68%,var(--green-w) 68%); border-color:var(--green); }
+.claim.ok sup { background:var(--green); }
+.claim.unknown { background:linear-gradient(transparent 68%,var(--amber-w) 68%); border-color:var(--amber); }
+.claim.unknown sup { background:var(--amber); }
+.scope-note { margin:12px 0 0; color:var(--muted); font:400 12px/1.55 var(--mono); }
+.ledger { display:grid; gap:10px; margin-top:24px; }
+.ledger-row { display:grid; grid-template-columns:52px 118px minmax(190px,.9fr) minmax(280px,1.65fr); gap:16px; align-items:start; padding:17px 18px; background:var(--paper); border:1px solid var(--line); border-radius:8px; }
+.cid { font:500 12px var(--mono); color:var(--muted); }
+.status { display:inline-flex; width:max-content; border:1px solid currentColor; border-radius:99px; padding:3px 9px; font:500 10px var(--mono); text-transform:uppercase; letter-spacing:.04em; }
+.status.ok { color:var(--green); background:var(--green-w); }
+.status.bad { color:var(--red); background:var(--red-w); }
+.status.unknown { color:var(--amber); background:var(--amber-w); }
+.ledger-row .said { font:600 14px/1.45 var(--display); }
+.ledger-row .finding { color:var(--ink2); font-size:15.5px; line-height:1.5; }
+.source { display:block; margin-top:5px; color:var(--muted); font:400 10.5px/1.45 var(--mono); overflow-wrap:anywhere; }
+.chart-shell { margin-top:26px; padding:20px; }
+.legend { display:flex; flex-wrap:wrap; gap:8px 20px; margin-bottom:10px; color:var(--ink2); font:500 12px var(--mono); }
+.legend i { display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:6px; vertical-align:-1px; }
+.legend .chunk { background:var(--blue); } .legend .none { background:var(--red); } .legend .slo { border-left:2px dashed var(--amber); border-radius:0; width:4px; }
+.scroll { overflow-x:auto; }
+.scroll svg { display:block; width:100%; height:auto; min-width:760px; }
+.grid { stroke:var(--grid); stroke-width:1; }
+.axis { stroke:var(--line2); stroke-width:1.2; }
+.slo-line { stroke:var(--amber); stroke-width:1.7; stroke-dasharray:6 5; }
+.trend { stroke:var(--blue); stroke-width:2; fill:none; stroke-dasharray:5 5; }
+.pt { fill:var(--blue); stroke:var(--paper); stroke-width:3; }
+.pt-bad { fill:var(--red); stroke:var(--paper); stroke-width:3; }
+.sv-lab { font:400 12.5px var(--mono); fill:var(--muted); }
+.sv-title { font:700 14px var(--display); fill:var(--ink); }
+.sv-sub { font:400 12.5px var(--display); fill:var(--ink2); }
+figcaption { margin:12px 0 0; color:var(--ink2); font-size:15px; line-height:1.5; }
+.metrics { width:100%; border-collapse:collapse; margin-top:24px; font-variant-numeric:tabular-nums; }
+.metrics th,.metrics td { padding:11px 14px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap; }
+.metrics th:first-child,.metrics td:first-child { text-align:left; position:sticky; left:0; background:var(--paper); }
+.metrics th { color:var(--muted); font:500 11px var(--mono); text-transform:uppercase; letter-spacing:.04em; }
+.metrics td { font:500 14px var(--mono); }
+.metrics .good { color:var(--green); font-weight:500; }
+.metrics .bad { color:var(--red); font-weight:500; }
+.causes { display:grid; grid-template-columns:1fr 58px 1fr 58px 1fr; align-items:stretch; gap:10px; margin-top:28px; }
+.cause { min-height:126px; padding:20px; border:1px solid var(--line); background:var(--paper); border-radius:8px; }
+.cause small { display:block; color:var(--muted); font:500 10px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
+.cause strong { display:block; margin-top:8px; font:700 17px/1.3 var(--display); }
+.cause p { margin:7px 0 0; color:var(--ink2); font-size:14.5px; line-height:1.45; }
+.arrow { display:flex; align-items:center; justify-content:center; color:var(--muted); font:400 23px var(--mono); }
+.split { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px; }
+.path { padding:22px; border-radius:8px; border:1px solid var(--line); background:var(--paper); }
+.path.itl { border-top:4px solid var(--blue); } .path.ttft { border-top:4px solid var(--red); }
+.path p { color:var(--ink2); margin:7px 0 0; font-size:15.5px; }
+.answer { margin-top:24px; padding:30px 34px; border-left:5px solid var(--green); }
+.answer .eyebrow { color:var(--green); }
+.answer p { max-width:820px; margin:0 0 13px; }
+.answer p:last-child { margin-bottom:0; }
+.missing { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:24px; }
+.missing div { padding:18px; border:1px dashed var(--line2); border-radius:8px; color:var(--ink2); font-size:15px; }
+.missing b { display:block; color:var(--ink); font:700 14px var(--display); margin-bottom:5px; }
+.sources { display:grid; gap:10px; margin-top:22px; }
+.sources a { display:block; padding:14px 16px; background:var(--paper); border:1px solid var(--line); border-radius:7px; font:400 12px/1.5 var(--mono); overflow-wrap:anywhere; }
+footer { border-top:1px solid var(--line); margin-top:58px; padding-top:20px; color:var(--muted); font:400 12px/1.55 var(--mono); }
+.sc-bad { outline:2px dashed var(--red) !important; outline-offset:1px; }
+svg text.sc-bad { fill:var(--red) !important; }
+.sc-bar { position:fixed; left:0; right:0; bottom:0; z-index:20; padding:8px 16px calc(8px + env(safe-area-inset-bottom,0px)); background:var(--ink); color:var(--paper); font:500 12px var(--mono); }
+@media (max-width:820px) {
+  .facts,.missing { grid-template-columns:1fr 1fr; }
+  .ledger-row { grid-template-columns:42px 106px 1fr; }
+  .ledger-row .finding { grid-column:2/4; }
+  .causes { grid-template-columns:1fr; }
+  .arrow { transform:rotate(90deg); min-height:24px; }
+}
+@media (max-width:600px) {
+  .wrap { width:min(100% - 28px,1180px); }
+  body { font-size:17px; }
+  header { padding-top:46px; }
+  .facts,.split,.missing { grid-template-columns:1fr; }
+  .draft { grid-template-columns:1fr; }
+  .draft-label { border-right:0; border-bottom:1px solid var(--line); }
+  .draft-copy { padding:23px 20px; font-size:19px; }
+  .ledger-row { grid-template-columns:38px 1fr; gap:10px; }
+  .ledger-row .said,.ledger-row .finding { grid-column:2; }
+  .chart-shell { padding:12px; }
+  .answer { padding:24px 20px; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <nav class="nav">
+    <a href="./">llm-output-explainer / demos</a>
+    <span class="right">STATIC OUTPUT AUDIT<br>NO MODEL OR BENCHMARK RUNS IN THIS PAGE</span>
+  </nav>
+
+  <header>
+    <p class="eyebrow">LLM output audit · vLLM issue #27093 · evidence snapshot 3 Oct 2026</p>
+    <h1>The answer chose 3K. <em>The evidence did not.</em></h1>
+    <p class="lede">An LLM turns one benchmark table into a confident deployment decision. This audit separates arithmetic from inference, checks the answer against current vLLM documentation, and leaves one metric unresolved instead of inventing its definition.</p>
+    <div class="facts">
+      <div class="fact"><b>6 claims</b><span>split out of one short answer</span><code>C1–C6 below</code></div>
+      <div class="fact"><b>2 verified</b><span>directly supported by the supplied table</span><code>C3, C4</code></div>
+      <div class="fact"><b>3 corrected</b><span>contradicted by data or current docs</span><code>C1, C2, C5</code></div>
+      <div class="fact"><b>1 unresolved</b><span>metric populations are not defined</span><code>C6 · raw trace required</code></div>
+    </div>
+  </header>
+
+  <section id="draft">
+    <p class="eyebrow">Input · illustrative LLM answer</p>
+    <h2>It sounds decisive because it hides the trade-off</h2>
+    <p class="intro">The draft below was assembled for this demo from common failure modes. It is not a quote from the issue author. Each marked phrase becomes one independently checked claim.</p>
+    <div class="paper draft">
+      <div class="draft-label"><strong>Model draft</strong><span>Prompt: “Which chunk size should we deploy, and will P/D disaggregation fix the regression?”</span></div>
+      <div class="draft-copy">
+        Deploy 3K. It is <span class="claim bad">the only option that meets both latency SLOs<sup>C1</sup></span>, because <span class="claim bad">smaller chunks reduce TTFT and tail ITL<sup>C2</sup></span>. In this run, <span class="claim ok">no-chunk had the worst tail ITL<sup>C3</sup></span>, while <span class="claim ok">3K cut P99 ITL by about 43%<sup>C4</sup></span>. Move to P/D disaggregation next; <span class="claim bad">it should also increase throughput<sup>C5</sup></span>. Finally, <span class="claim unknown">4% of requests above 400 ms proves the P99 row is inconsistent<sup>C6</sup></span>.
+      </div>
+    </div>
+    <p class="scope-note">Audit rule: reported measurements apply only to the issue's Qwen2-32B, vLLM 0.9.1, 8 × H20 workload unless another source supports a broader statement.</p>
+  </section>
+
+  <section id="ledger">
+    <p class="eyebrow">Claim ledger · sentence-level verdicts</p>
+    <h2>One paragraph contains three different kinds of error</h2>
+    <div class="ledger">
+      <div class="ledger-row"><span class="cid">C1</span><span class="status bad">corrected</span><span class="said">3K meets both SLOs</span><span class="finding">Its average TTFT is 1,445 ms, above the stated 1,300 ms SLO. No ITL SLO is supplied, so “both” cannot be tested.<span class="source">issue #27093 · table + stated TTFT SLO</span></span></div>
+      <div class="ledger-row"><span class="cid">C2</span><span class="status bad">corrected</span><span class="said">Smaller improves TTFT and ITL</span><span class="finding">The directions oppose each other. Current vLLM guidance says smaller token budgets favor ITL; higher budgets favor TTFT.<span class="source">vLLM Optimization and Tuning · Chunked Prefill</span></span></div>
+      <div class="ledger-row"><span class="cid">C3</span><span class="status ok">verified</span><span class="said">No-chunk has the worst tail</span><span class="finding">Within the supplied table, no-chunk has the highest P99 ITL (400.31 ms) and maximum ITL (3,950 ms). This is an observation, not a universal result.<span class="source">issue #27093 · P99 ITL and Max ITL rows</span></span></div>
+      <div class="ledger-row"><span class="cid">C4</span><span class="status ok">verified</span><span class="said">3K cuts P99 ITL ≈43%</span><span class="finding">The arithmetic is 1 − 227 / 400.31 = 43.3%. The baseline is no-chunk in this one workload.<span class="source">derived from issue #27093 · values preserved below</span></span></div>
+      <div class="ledger-row"><span class="cid">C5</span><span class="status bad">corrected</span><span class="said">P/D raises throughput</span><span class="finding">Current vLLM documentation explicitly says disaggregated prefill does not improve throughput. Its stated uses are separate TTFT/ITL tuning and control of tail ITL.<span class="source">vLLM Disaggregated Prefilling · current docs</span></span></div>
+      <div class="ledger-row"><span class="cid">C6</span><span class="status unknown">unresolved</span><span class="said">The percentile rows conflict</span><span class="finding">They may use different populations: token gaps for P99 versus requests containing at least one gap above 400 ms. The issue does not define the denominators or provide the raw trace.<span class="source">missing: metric definitions, sample counts, raw observations</span></span></div>
+    </div>
+  </section>
+
+  <section id="tradeoff">
+    <p class="eyebrow">Evidence · reported production benchmark</p>
+    <h2>The data describes a frontier, not a winner</h2>
+    <p class="intro">Lower and farther left is better. A smaller chunk moves down on tail ITL but right on average TTFT. The 1.3 s line is the only explicit SLO in the issue.</p>
+    <figure class="paper chart-shell">
+      <div class="legend"><span><i class="chunk"></i>chunked prefill</span><span><i class="none"></i>no chunk</span><span><i class="slo"></i>average TTFT SLO</span></div>
+      <div class="scroll">
+        <svg viewBox="0 0 920 490" role="img" aria-label="Trade-off plot of average TTFT against P99 ITL. Smaller chunks have lower P99 ITL but higher average TTFT. The 3K and 4K settings miss the 1.3 second TTFT SLO.">
+          <line class="grid" x1="90" y1="80" x2="850" y2="80"/><line class="grid" x1="90" y1="170" x2="850" y2="170"/><line class="grid" x1="90" y1="260" x2="850" y2="260"/><line class="grid" x1="90" y1="350" x2="850" y2="350"/>
+          <line class="grid" x1="90" y1="40" x2="90" y2="400"/><line class="grid" x1="258" y1="40" x2="258" y2="400"/><line class="grid" x1="427" y1="40" x2="427" y2="400"/><line class="grid" x1="596" y1="40" x2="596" y2="400"/><line class="grid" x1="765" y1="40" x2="765" y2="400"/>
+          <line class="axis" x1="90" y1="400" x2="850" y2="400"/><line class="axis" x1="90" y1="40" x2="90" y2="400"/>
+          <line class="slo-line" x1="511" y1="40" x2="511" y2="400"/>
+          <text class="sv-title" x="531" y="62">1,300 ms TTFT SLO</text><text class="sv-sub" x="531" y="80">left side meets it</text>
+          <path class="trend" d="M756 337 L670 276 L509 235"/><path class="trend" d="M509 235 L189 103"/>
+          <circle class="pt" cx="756" cy="337" r="10"/><text class="sv-title" x="730" y="365">3K</text><text class="sv-sub" x="730" y="382">1445 / 227 ms</text>
+          <circle class="pt" cx="670" cy="276" r="10"/><text class="sv-title" x="646" y="304">4K</text><text class="sv-sub" x="646" y="321">1394 / 274 ms</text>
+          <circle class="pt" cx="509" cy="235" r="10"/><text class="sv-title" x="529" y="226">5K</text><text class="sv-sub" x="529" y="243">1299 / 297 ms</text>
+          <circle class="pt-bad" cx="189" cy="103" r="11"/><text class="sv-title" x="211" y="98">No chunk</text><text class="sv-sub" x="211" y="115">1108 / 400 ms</text>
+          <text class="sv-lab" x="90" y="426" text-anchor="middle">1050</text><text class="sv-lab" x="258" y="426" text-anchor="middle">1150</text><text class="sv-lab" x="427" y="426" text-anchor="middle">1250</text><text class="sv-lab" x="596" y="426" text-anchor="middle">1350</text><text class="sv-lab" x="765" y="426" text-anchor="middle">1450</text>
+          <text class="sv-title" x="470" y="468" text-anchor="middle">Average TTFT (ms) →</text>
+          <text class="sv-lab" x="75" y="84" text-anchor="end">400</text><text class="sv-lab" x="75" y="174" text-anchor="end">350</text><text class="sv-lab" x="75" y="264" text-anchor="end">300</text><text class="sv-lab" x="75" y="354" text-anchor="end">250</text>
+          <text class="sv-title" transform="translate(24 220) rotate(-90)" text-anchor="middle">P99 ITL (ms) → better downward</text>
+        </svg>
+      </div>
+      <figcaption>Reported values, not a rerun. The 5K point is just inside the average-TTFT SLO; the table gives no tail-ITL SLO, throughput, confidence interval, or request count. Therefore it does not establish a production winner.</figcaption>
+    </figure>
+
+    <div class="scroll paper">
+      <table class="metrics">
+        <thead><tr><th>Reported metric</th><th>3K</th><th>4K</th><th>5K</th><th>No chunk</th></tr></thead>
+        <tbody>
+          <tr><td>Average TTFT (ms)</td><td class="bad">1,445</td><td class="bad">1,394</td><td class="good">1,299</td><td class="good">1,108.32</td></tr>
+          <tr><td>Average ITL (ms)</td><td>21</td><td>20</td><td>19</td><td>20.43</td></tr>
+          <tr><td>P99 ITL (ms)</td><td class="good">227</td><td>274</td><td>297</td><td class="bad">400.31</td></tr>
+          <tr><td>Maximum ITL (ms)</td><td class="good">883</td><td>1,036</td><td>1,051</td><td class="bad">3,950</td></tr>
+          <tr><td>Requests with ITL &gt; 400 ms</td><td>4%</td><td>39.40%</td><td>72%</td><td>82%</td></tr>
+          <tr><td>Stutters per request</td><td>1</td><td>1.29</td><td>2.22</td><td>3.85</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="scope-note">Green and red cells only mark direction within this table. They do not add a new SLO. All values are transcribed from issue #27093.</p>
+  </section>
+
+  <section id="cause">
+    <p class="eyebrow">Causal reading · source attribution preserved</p>
+    <h2>The same knob pulls two latency metrics apart</h2>
+    <div class="causes">
+      <div class="cause"><small>configuration</small><strong>Smaller token budget</strong><p>A long prefill is split into more, shorter scheduler steps.</p></div>
+      <div class="arrow">→</div>
+      <div class="cause"><small>scheduler effect</small><strong>Decode gets shorter interruptions</strong><p>Current vLLM scheduling prioritizes pending decode work before filling the remaining budget with prefill.</p></div>
+      <div class="arrow">→</div>
+      <div class="cause"><small>observed direction</small><strong>Tail ITL falls</strong><p>In the issue, P99 ITL drops from 400.31 ms with no chunking to 227 ms at 3K.</p></div>
+    </div>
+    <div class="split">
+      <div class="path itl"><h3>Why streaming becomes smoother</h3><p>Shorter prefill chunks limit how long decode work waits behind a prefill step. vLLM documents smaller budgets as the direction for better ITL.</p></div>
+      <div class="path ttft"><h3>Why first token becomes slower</h3><p>More chunks add scheduling and KV-history access work. The issue author gives this mechanism; current vLLM guidance independently says larger budgets favor TTFT.</p></div>
+    </div>
+    <p class="scope-note">The benchmark supports the latency directions. It does not isolate how much of the TTFT change comes from scheduling, KV access, kernels, or another correlated factor.</p>
+  </section>
+
+  <section id="answer">
+    <p class="eyebrow">Replacement · controlled English</p>
+    <h2>A useful answer says what the table cannot decide</h2>
+    <div class="paper answer">
+      <p class="eyebrow">Corrected operator summary</p>
+      <p><b>Do not select 3K from this table alone.</b> The 3K setting has the lowest reported P99 ITL, but its average TTFT is 1,445 ms. Thus, it misses the stated 1,300 ms TTFT SLO.</p>
+      <p>The 5K setting is the only chunked setting below that TTFT limit, at 1,299 ms. It also has a lower reported P99 ITL than no-chunk, 297 ms versus 400.31 ms. However, the issue does not give a tail-ITL SLO, throughput, request count, or uncertainty. Therefore, the data does not prove that 5K is the production setting.</p>
+      <p>Use a controlled load test to compare 5K and nearby budgets at the target arrival rate. Define each percentile population before the test. Evaluate disaggregated prefill if tail ITL needs independent control, but do not claim a throughput gain: current vLLM documentation explicitly excludes that benefit.</p>
+    </div>
+    <div class="missing">
+      <div><b>Metric definitions</b>Per-token gap, per-request maximum, or another population?</div>
+      <div><b>Load conditions</b>Arrival rate, concurrency, duration, warm-up, and request count.</div>
+      <div><b>Decision limits</b>A tail-ITL SLO and an allowed violation rate, not TTFT alone.</div>
+      <div><b>Capacity result</b>Throughput at the SLO, plus confidence intervals or repeated runs.</div>
+    </div>
+  </section>
+
+  <section id="sources">
+    <p class="eyebrow">Sources · live state checked 3 Oct 2026</p>
+    <h2>Every number has an address</h2>
+    <div class="sources">
+      <a href="https://github.com/vllm-project/vllm/issues/27093">vllm-project/vllm#27093 — workload, benchmark table, profiling notes, and proposed process-level P/D design</a>
+      <a href="https://docs.vllm.ai/en/latest/configuration/optimization/#chunked-prefill">vLLM Optimization and Tuning — current chunked-prefill scheduling policy and TTFT/ITL budget trade-off</a>
+      <a href="https://docs.vllm.ai/en/latest/features/disagg_prefill/">vLLM Disaggregated Prefilling — separate TTFT/ITL tuning, tail-ITL control, and explicit no-throughput note</a>
+    </div>
+  </section>
+
+  <footer>Built as a static demonstration of LLM-output analysis. The LLM paragraph is illustrative. The benchmark values belong to their source and were not reproduced here. Add <b>#selfcheck</b> to this URL to show the layout audit.</footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  function selfCheck() {
+    var found = [];
+    function add(el, kind, msg) { found.push({ el: el, kind: kind, msg: msg }); }
+    if (document.documentElement.scrollWidth > window.innerWidth + 1) add(document.body, "fail", "page scrolls sideways");
+    Array.prototype.forEach.call(document.querySelectorAll(".wrap *"), function (el) {
+      if (el.closest("svg") || el.closest(".scroll")) return;
+      var cs = getComputedStyle(el);
+      if (cs.overflowX === "auto" || cs.overflowX === "scroll" || cs.display === "inline") return;
+      if (el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 3) add(el, "fail", "content overflows its box by " + (el.scrollWidth - el.clientWidth) + "px");
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".wrap svg"), function (svg) {
+      var vb = svg.viewBox && svg.viewBox.baseVal, r = svg.getBoundingClientRect();
+      var scale = vb && vb.width ? r.width / vb.width : 1;
+      var texts = Array.prototype.filter.call(svg.querySelectorAll("text"), function (t) {
+        var b = t.getBoundingClientRect(); return t.textContent.trim() && b.width > 0 && b.height > 0;
+      });
+      var boxes = texts.map(function (t) { return t.getBoundingClientRect(); });
+      var small = [], minPx = Infinity, minText = "";
+      texts.forEach(function (t, i) {
+        var px = parseFloat(getComputedStyle(t).fontSize) * scale;
+        if (px < 10) { small.push(t); if (px < minPx) { minPx = px; minText = t.textContent.trim().slice(0, 30); } }
+        for (var j = i + 1; j < boxes.length; j++) {
+          var a = boxes[i], b = boxes[j];
+          var w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          var h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (w > 2 && h > 2) add(t, "fail", "label overlaps another label");
+        }
+      });
+      if (small.length) add(svg, "warn", small.length + " label(s) render under 10px, smallest " + minPx.toFixed(1) + "px (" + minText + ")");
+    });
+    var fails = found.filter(function (f) { return f.kind === "fail"; }).length;
+    var warns = found.length - fails;
+    document.documentElement.setAttribute("data-selfcheck", fails ? "fail" : "pass");
+    var summary = "selfCheck " + (fails ? "FAIL" : "PASS") + " at " + window.innerWidth + "px: " + fails + " fail, " + warns + " warn";
+    var report = document.getElementById("selfcheck-report") || document.body.appendChild(document.createElement("pre"));
+    report.id = "selfcheck-report"; report.hidden = true; report.textContent = summary;
+    if (location.hash === "#selfcheck") {
+      found.forEach(function (f) { f.el.classList.add("sc-bad"); f.el.setAttribute("title", f.msg); });
+      var bar = document.querySelector(".sc-bar") || document.body.appendChild(document.createElement("div"));
+      bar.className = "sc-bar"; bar.textContent = summary + (found.length ? " (hover outlined items)" : "");
+    }
+    return found;
+  }
+  var ready = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  ready.then(function () { setTimeout(selfCheck, 60); });
+  window.addEventListener("hashchange", function () { if (location.hash === "#selfcheck") selfCheck(); });
+})();
+</script>
+</body>
+</html>

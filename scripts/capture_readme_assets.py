@@ -16,6 +16,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE_URL = (ROOT / "docs" / "index.html").as_uri()
+AUDIT_URL = (ROOT / "docs" / "chunked-prefill-audit.html").as_uri()
 OUT = ROOT / "media"
 
 
@@ -172,6 +173,22 @@ def capture_selfcheck(browser, temp):
     page.close()
 
 
+def capture_audit(browser, temp):
+    page = browser.new_page(viewport={"width": 1440, "height": 1100})
+    page.goto(AUDIT_URL)
+    wait_until_ready(page)
+    set_theme(page, "light")
+    source = temp / "chunked-prefill-audit.png"
+    page.screenshot(path=source)
+    with Image.open(source) as image:
+        width = 1280
+        height = round(image.height * width / image.width)
+        image.convert("RGB").resize(
+            (width, height), Image.Resampling.LANCZOS
+        ).save(OUT / "chunked-prefill-audit.png", optimize=True)
+    page.close()
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="llm-output-explainer-") as directory:
@@ -181,8 +198,14 @@ def main():
             capture_simulator(browser, temp)
             capture_themes(browser, temp)
             capture_selfcheck(browser, temp)
+            capture_audit(browser, temp)
             browser.close()
-    for name in ("simulator.gif", "theme-comparison.png", "selfcheck.gif"):
+    for name in (
+        "chunked-prefill-audit.png",
+        "simulator.gif",
+        "theme-comparison.png",
+        "selfcheck.gif",
+    ):
         path = OUT / name
         print(f"{path.relative_to(ROOT)}: {path.stat().st_size / 1024:.0f} KiB")
 
