@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="llm-output-explainer: four formats, from controlled English to diagrams, interactive pages and narrated video, with every claim checked against its source.">
+  <style>
+    .bg0 { stop-color: #F5F7FB; } .bg1 { stop-color: #E6ECF6; }
+    .dot { fill: #C9D3E3; }
+    .card { fill: #FFFFFF; stroke: #D5DDEA; }
+    .ink { fill: #121826; } .ink2 { fill: #46506A; } .mute { fill: #7A859B; }
+    .acc { fill: #2F62C9; } .accs { stroke: #2F62C9; } .accw { fill: #E3EBFB; }
+    .hot { fill: #C9822B; } .hots { stroke: #C9822B; } .hotw { fill: #FAEFDF; }
+    .bad { fill: #B4413A; } .line { stroke: #C3CCDB; } .box { fill: #F1F4F9; stroke: #C3CCDB; }
+    .chip { fill: #FFFFFF; stroke: #CBD4E3; }
+    .sans { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .serif { font-family: Georgia, "Times New Roman", serif; }
+    @media (prefers-color-scheme: dark) {
+      .bg0 { stop-color: #0B1019; } .bg1 { stop-color: #131C2E; }
+      .dot { fill: #22304A; }
+      .card { fill: #141B28; stroke: #26324A; }
+      .ink { fill: #E8ECF4; } .ink2 { fill: #AEB8CA; } .mute { fill: #7D889D; }
+      .acc { fill: #6D96EC; } .accs { stroke: #6D96EC; } .accw { fill: #1B2944; }
+      .hot { fill: #E0A055; } .hots { stroke: #E0A055; } .hotw { fill: #33261A; }
+      .bad { fill: #E07B74; } .line { stroke: #34415A; } .box { fill: #1A2333; stroke: #34415A; }
+      .chip { fill: #141B28; stroke: #2E3B55; }
+    }
+  </style>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="bg0"/><stop offset="1" class="bg1"/></linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.1" class="dot"/></pattern>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="6" stdDeviation="9" flood-color="#0B1220" flood-opacity="0.12"/></filter>
+    <marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="ink2"/></marker>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#grid)" opacity="0.7"/>
+
+  <!-- headline -->
+  <text x="64" y="78" class="mono mute" font-size="14" letter-spacing="2.5">CLAUDE CODE · CODEX · OPEN SOURCE SKILL</text>
+  <text x="62" y="140" class="sans ink" font-size="56" font-weight="800" letter-spacing="-1.5">llm-output-explainer</text>
+  <text x="64" y="184" class="serif ink2" font-size="23">Turn LLM output into explanations you can read fast,</text>
+  <text x="64" y="215" class="serif ink2" font-size="23">and trust: every claim is checked against its source.</text>
+
+  <!-- verification chips -->
+  <g class="sans" font-size="14" font-weight="600">
+    <rect x="64" y="240" width="132" height="30" rx="15" class="chip"/><circle cx="82" cy="255" r="5" class="acc"/><text x="94" y="260" class="ink">45 verified</text>
+    <rect x="206" y="240" width="140" height="30" rx="15" class="chip"/><circle cx="224" cy="255" r="5" class="hot"/><text x="236" y="260" class="ink">2 corrected</text>
+    <rect x="356" y="240" width="160" height="30" rx="15" class="chip"/><circle cx="374" cy="255" r="5" class="mute"/><text x="386" y="260" class="ink">0 unverifiable</text>
+    <rect x="526" y="240" width="196" height="30" rx="15" class="chip"/><text x="544" y="260" class="mono ink2" font-weight="500" font-size="13">selfCheck PASS · 390px</text>
+  </g>
+
+  <!-- card 1: controlled English -->
+  <g filter="url(#sh)"><rect x="64" y="306" width="270" height="290" rx="14" class="card"/></g>
+  <text x="84" y="338" class="mono acc" font-size="12" font-weight="700" letter-spacing="1.5">1 · WRITING</text>
+  <text x="84" y="362" class="sans ink" font-size="18" font-weight="700">Controlled English</text>
+  <text x="84" y="382" class="sans mute" font-size="12.5">80% ASD-STE100, Issue 9 rules</text>
+  <text x="84" y="414" class="mono bad" font-size="11" font-weight="700" letter-spacing="1">BEFORE</text>
+  <g class="sans mute" font-size="13">
+    <text x="84" y="434">In order to ensure that stale</text>
+    <text x="84" y="452">entries are not returned, the</text>
+    <text x="84" y="470">cache is invalidated by the…</text>
+  </g>
+  <line x1="84" y1="429" x2="268" y2="429" class="line" stroke-width="1.2"/>
+  <line x1="84" y1="447" x2="270" y2="447" class="line" stroke-width="1.2"/>
+  <line x1="84" y1="465" x2="250" y2="465" class="line" stroke-width="1.2"/>
+  <text x="84" y="502" class="mono acc" font-size="11" font-weight="700" letter-spacing="1">AFTER</text>
+  <g class="sans ink" font-size="13.5" font-weight="500">
+    <text x="84" y="523">The service updates a record.</text>
+    <text x="84" y="543">Then the writer removes that</text>
+    <text x="84" y="563">record from the cache. Thus,</text>
+    <text x="84" y="583">clients do not get old data.</text>
+  </g>
+
+  <!-- card 2: diagram -->
+  <g filter="url(#sh)"><rect x="358" y="306" width="270" height="290" rx="14" class="card"/></g>
+  <text x="378" y="338" class="mono acc" font-size="12" font-weight="700" letter-spacing="1.5">2 · DIAGRAM</text>
+  <text x="378" y="362" class="sans ink" font-size="18" font-weight="700">Draw the difference</text>
+  <text x="378" y="382" class="sans mute" font-size="12.5">a verb on every arrow</text>
+  <text x="378" y="418" class="mono mute" font-size="10.5" letter-spacing="1">BEFORE · 6 STEPS</text>
+  <rect x="378" y="428" width="62" height="34" rx="6" class="box"/>
+  <rect x="462" y="428" width="62" height="34" rx="6" class="box"/>
+  <rect x="546" y="428" width="62" height="34" rx="6" class="box"/>
+  <line x1="440" y1="445" x2="460" y2="445" class="line" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="524" y1="445" x2="544" y2="445" class="line" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="378" y="500" class="mono acc" font-size="10.5" letter-spacing="1">AFTER · 4 LAUNCHES</text>
+  <rect x="378" y="510" width="62" height="34" rx="6" class="accw accs" stroke-width="1.4"/>
+  <rect x="462" y="510" width="62" height="34" rx="6" class="accw accs" stroke-width="1.4"/>
+  <rect x="546" y="510" width="62" height="34" rx="6" class="accw accs" stroke-width="1.4"/>
+  <line x1="440" y1="527" x2="460" y2="527" class="line" stroke-width="1.6" marker-end="url(#ar)"/>
+  <path d="M524,536 C534,560 536,560 546,536" fill="none" class="hots" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="535" y="574" class="sans hot" font-size="12" font-weight="600" text-anchor="middle">new edge</text>
+  <text x="409" y="449" class="mono ink2" font-size="11" text-anchor="middle">GEMM</text>
+  <text x="409" y="531" class="mono ink" font-size="11" text-anchor="middle">K1</text>
+  <text x="493" y="531" class="mono ink" font-size="11" text-anchor="middle">K2</text>
+  <text x="577" y="531" class="mono ink" font-size="11" text-anchor="middle">K3</text>
+
+  <!-- card 3: interactive page -->
+  <g filter="url(#sh)"><rect x="652" y="306" width="270" height="290" rx="14" class="card"/></g>
+  <text x="672" y="338" class="mono acc" font-size="12" font-weight="700" letter-spacing="1.5">3 · PAGE</text>
+  <text x="672" y="362" class="sans ink" font-size="18" font-weight="700">Interactive HTML</text>
+  <text x="672" y="382" class="sans mute" font-size="12.5">real algorithm, live controls</text>
+  <rect x="672" y="398" width="230" height="176" rx="9" class="box"/>
+  <circle cx="686" cy="411" r="3.5" class="bad"/><circle cx="698" cy="411" r="3.5" class="hot"/><circle cx="710" cy="411" r="3.5" class="acc"/>
+  <line x1="672" y1="422" x2="902" y2="422" class="line"/>
+  <line x1="684" y1="456" x2="890" y2="456" class="hots" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text x="890" y="450" class="mono hot" font-size="10" text-anchor="end">running max m</text>
+  <g class="acc">
+    <rect x="688" y="508" width="14" height="22" rx="2"/><rect x="708" y="490" width="14" height="40" rx="2"/>
+    <rect x="728" y="500" width="14" height="30" rx="2"/><rect x="748" y="470" width="14" height="60" rx="2"/>
+    <rect x="768" y="484" width="14" height="46" rx="2"/><rect x="788" y="462" width="14" height="68" rx="2"/>
+  </g>
+  <rect x="808" y="476" width="14" height="54" rx="2" fill="none" class="hots" stroke-width="1.4" stroke-dasharray="3 2"/>
+  <rect x="828" y="496" width="14" height="34" rx="2" fill="none" class="hots" stroke-width="1.4" stroke-dasharray="3 2"/>
+  <line x1="684" y1="530" x2="890" y2="530" class="line"/>
+  <line x1="688" y1="553" x2="860" y2="553" class="line" stroke-width="3" stroke-linecap="round"/>
+  <line x1="688" y1="553" x2="790" y2="553" class="accs" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="790" cy="553" r="6" class="acc"/>
+  <text x="868" y="557" class="mono mute" font-size="10">3/4</text>
+
+  <!-- card 4: narrated video -->
+  <g filter="url(#sh)"><rect x="946" y="306" width="270" height="290" rx="14" class="card"/></g>
+  <text x="966" y="338" class="mono acc" font-size="12" font-weight="700" letter-spacing="1.5">4 · VIDEO</text>
+  <text x="966" y="362" class="sans ink" font-size="18" font-weight="700">Narrated explainer</text>
+  <text x="966" y="382" class="sans mute" font-size="12.5">on request · plan approved first</text>
+  <rect x="966" y="400" width="70" height="52" rx="6" class="box"/>
+  <rect x="1046" y="400" width="70" height="52" rx="6" class="box"/>
+  <rect x="1126" y="400" width="70" height="52" rx="6" class="box"/>
+  <circle cx="1001" cy="426" r="11" fill="none" class="accs" stroke-width="2"/>
+  <path d="M1058,440 L1081,412 L1104,440 Z" fill="none" class="accs" stroke-width="2"/>
+  <rect x="1142" y="414" width="38" height="24" rx="3" class="accw accs" stroke-width="1.6"/>
+  <circle cx="1081" cy="506" r="26" class="acc"/>
+  <path d="M1073,493 L1073,519 L1095,506 Z" fill="#FFFFFF"/>
+  <path d="M966,560 q8,-14 16,0 t16,0 t16,0 t16,0 t16,0 t16,0 t16,0 t16,0 t16,0 t16,0 t16,0 t16,0 t16,0 t16,0" fill="none" class="hots" stroke-width="2"/>
+  <text x="966" y="586" class="mono mute" font-size="10.5">narration · 150 wpm · 80% STE</text>
+</svg>

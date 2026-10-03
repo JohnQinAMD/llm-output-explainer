@@ -1,5 +1,23 @@
 # llm-output-explainer
 
+<p align="center">
+  <img src="media/hero.svg" alt="llm-output-explainer: controlled English, diagrams, interactive pages and narrated video, with every claim checked against its source" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://johnqinamd.github.io/llm-output-explainer/"><b>▶ Live demo</b></a> &nbsp;·&nbsp;
+  <a href="#install">Install</a> &nbsp;·&nbsp;
+  <a href="#four-formats">Formats</a> &nbsp;·&nbsp;
+  <a href="#what-it-adds">What it adds</a>
+</p>
+
+<p align="center">
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2F62C9">
+  <img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-D97757">
+  <img alt="Codex plugin" src="https://img.shields.io/badge/Codex-plugin-111827">
+  <img alt="ASD-STE100 Issue 9" src="https://img.shields.io/badge/ASD--STE100-Issue%209-C9822B">
+</p>
+
 A Codex and Claude Code skill that explains code, papers, pull requests and results in the format that is fastest to understand. It checks every claim against its source before it writes anything.
 
 The idea comes from [Andrej Karpathy's post](https://x.com/karpathy/status/2105819303471976479). People spend more and more time reading what language models produce. Writing in a controlled language, drawing diagrams, building interactive pages, and making explainer videos can make that output easier to understand.
@@ -22,6 +40,17 @@ The skill picks a format from the request. If you name one ("explain in STE", "m
 - **STE rules checked against the standard.** `references/ste-writing.md` cites the rule numbers of ASD-STE100 Issue 9 (2025-01-15). `scripts/ste_lint.py` flags common rule breaks and names the rule for each.
 - **Pages check themselves.** The starter page includes `selfCheck()`, which flags overflow, overlapping labels and text that is too small, at any screen width. Add `#selfcheck` to the URL to outline the problems. `scripts/check_page.py` checks the page before you publish it.
 - **Written for a reader.** The skill writes differently for you, for a peer reviewer, or for a manager, and it can apply your own rules for each audience.
+
+## Live demo
+
+[**Online softmax**](https://johnqinamd.github.io/llm-output-explainer/) is a page the skill made in a test, from the FlashAttention and Milakov & Gimelshein papers. In the browser you can:
+
+- change the block size and step through one row, block by block.
+- watch the running max rise and every earlier weight shrink by the same factor.
+- add 100 to every score and see plain float32 softmax overflow while the online sum does not.
+- open "What the check corrected" to see the two claims the fact check fixed.
+
+The page passes its own `selfCheck()` at phone and desktop width, in light and dark mode. Its source is [`docs/index.html`](docs/index.html).
 
 ## Install
 
@@ -68,7 +97,7 @@ skills/explain/
     └── pr_facts.sh             live state of a GitHub pull request
 ```
 
-`examples/online-softmax.html` is a page the skill made in a test. Download it and open it in a browser.
+`docs/index.html` is the live demo page. GitHub Pages serves it, and you can also open it directly in a browser.
 
 ## Requirements
 

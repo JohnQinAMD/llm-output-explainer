@@ -49,6 +49,7 @@ def clean(text):
     text = re.sub(r"`[^`]*`", "IDENT", text)
     text = re.sub(r"https?://\S+", "URL", text)
     text = re.sub(r"^\s*\|.*$", "\n", text, flags=re.M)                    # table rows: not prose
+    text = re.sub(r"^\s*<.*$", "\n", text, flags=re.M)                     # raw HTML lines: not prose
     text = re.sub(r"^\s*#.*$", "\n", text, flags=re.M)                      # headings: not sentences
     text = re.sub(r"^\s*([-*_=]\s*){3,}$", "\n", text, flags=re.M)        # rules: paragraph break
     text = re.sub(r"^(\s*)(\d+\.|[-*+])\s+", r"\n\1", text, flags=re.M)  # each list item stands alone
