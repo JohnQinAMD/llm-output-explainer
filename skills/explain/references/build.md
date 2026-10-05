@@ -26,9 +26,9 @@ The main conversation writes `<work dir>/<name>.brief.md` with these fields:
 - **Work dir:** where to write files. It must have free space, and any machine that renders must be able to see it.
 - **Answer:** the one-line answer.
 - **Outline:** the sections, and what each figure must show.
-- **Claim ledger:** one line per claim, as `claim | source | status`.
+- **Claim ledger:** one line per claim, as `claim | source | status`, then the counts, for example "7 verified, 2 corrected, 1 unverifiable". The builder copies the counts and does not count again.
 - **Corrections:** the corrections the page names.
-- **Source copies:** local paths of the fetched pages, figures and data.
+- **Source copies:** local paths of the fetched pages, figures and data. Name each one as its source does, for example "article Figure 2: sources/fig3.jpg", because a file name is not a figure number.
 - **Video plan:** for a video, the plan the user approved.
 
 ## Page or diagram
@@ -49,7 +49,7 @@ The main conversation writes `<work dir>/<name>.brief.md` with these fields:
    - `hBars`: ranked systems.
    - `mulberry32`: seeded simulations.
    - `data-ref`: linked terms.
-4. **Use only claims from the ledger.** Put the ledger counts in the verification strip. For a claim that is not in the ledger, cut it, or label it on the page as background or a guess.
+4. **Use only claims from the ledger.** Copy the brief's counts into the verification strip. For a claim that is not in the ledger, cut it, or label it on the page as background or a guess.
 5. **Check:** run `python3 scripts/check_page.py <file>`, with `--standalone` for a standalone file. Fix every FAIL and every placeholder that is left.
 6. **Skip the browser look by default,** because the page runs `selfCheck()` in the viewer's browser. Look only if a local browser starts in a few seconds. Then:
    - Run two `--dump-dom` passes, at 390 px and 1280 px wide, in the light theme only.
