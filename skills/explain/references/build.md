@@ -25,7 +25,7 @@ The main conversation writes `<work dir>/<name>.brief.md` with these fields:
 - **Delivery:** a private Artifact when the Artifact tool is available, otherwise a standalone file.
 - **Work dir:** where to write files. It must have free space, and any machine that renders must be able to see it.
 - **Answer:** the one-line answer.
-- **Outline:** the sections, and what each figure must show.
+- **Outline:** the whole page: every section in order, what each figure and interaction must show, and the caveats and labels each section needs.
 - **Claim ledger:** one line per claim, as `claim | source | status`, then the counts, for example "7 verified, 2 corrected, 1 unverifiable". The builder copies the counts and does not count again.
 - **Corrections:** the corrections the page names.
 - **Source copies:** local paths of the fetched pages, figures and data. Name each one as its source does, for example "article Figure 2: sources/fig3.jpg", because a file name is not a figure number.
