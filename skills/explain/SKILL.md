@@ -81,7 +81,7 @@ A new reader needs a new outline; changing the wording is not enough. To meet a 
 ## 5. Produce
 
 - **Controlled English:** write it in chat. `references/ste-writing.md` has the Issue 9 rules, and `scripts/ste_lint.py [--strict] file` flags breaks.
-- **Diagram, page, or video:** do not build it in the root, and do not ask. Write `<work dir>/<name>.brief.md` with the fields in `references/build.md`, including the full ledger and copies of the fetched sources. Start a general-purpose subagent in the background (in Claude Code, the Agent tool with `run_in_background: true`) with the prompt "Read `<skill dir>/references/build.md` and follow it for the brief at `<brief path>`." Tell the user in one line, keep working, and relay its report as in section 6. For a video, get the plan from `references/video.md` step 2 approved in chat first. Without background subagents, follow `build.md` yourself.
+- **Diagram, page, or video:** do not build it in the root, and do not ask. Write `<work dir>/<name>.brief.md` with the fields in `references/build.md`, including the full ledger and copies of the fetched sources. Start a general-purpose subagent in the background on a fast model (in Claude Code, the Agent tool with `run_in_background: true` and `model: "sonnet"`) with the prompt "Read `<skill dir>/references/build.md` and follow it for the brief at `<brief path>`." Tell the user in one line, keep working, and relay its report as in section 6. For a video, get the plan from `references/video.md` step 2 approved in chat first. Without background subagents, follow `build.md` yourself.
 
 ## 6. Deliver
 

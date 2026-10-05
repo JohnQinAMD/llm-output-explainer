@@ -7,6 +7,14 @@ The explain skill writes a brief and starts this build in a background subagent,
 
 Paths below are relative to the skill directory, the parent of this file.
 
+## Speed rules
+
+Most build time goes into re-planning, not into writing. The brief already fixes the content, the order and the claims.
+- In your first step, read the brief and `references/html-page.md` together, and run `new_page.py`.
+- Do not re-plan the page or redesign it. Lay out each section from the outline as you write it.
+- Write all content and the page script in one pass, with one splice.
+- Do not reread the sources or the ledger's sources, read the scripts' code, or write your own layout checks.
+
 ## The brief
 
 The main conversation writes `<work dir>/<name>.brief.md` with these fields:

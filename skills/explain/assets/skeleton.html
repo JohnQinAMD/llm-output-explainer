@@ -51,7 +51,7 @@ figure { margin: 24px 0 8px; background: var(--panel); border: 1px solid var(--l
 figcaption { font-size: 14.5px; line-height: 1.55; color: var(--ink-2); margin-top: 14px; max-width: 78ch; }
 .scroll { overflow-x: auto; }
 .scroll > svg { display: block; width: 100%; height: auto; }
-.scroll > svg.wide { min-width: 860px; }   /* pipeline diagrams */
+.scroll > svg.wide { min-width: 980px; }   /* pipeline diagrams; keeps 11px labels of a 1060-wide viewBox at 10px or more */
 .scroll > svg.mid { min-width: 620px; }    /* charts */
 
 /* SVG vocabulary: text and shapes take color from tokens only. */
