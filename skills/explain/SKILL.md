@@ -20,18 +20,14 @@ If the user names a format, use it. In chat, answer in controlled English. When 
 
 ## 2. Parallelize the evidence work
 
-For every substantial explanation, decide the work split before deep reading. Do not ask the user to opt in.
-
-When collaboration or subagent tools are available, use two read-only subagents by default if any of these conditions apply:
+Decide the split before deep reading; do not ask the user to opt in. When subagent tools are available, use two read-only subagents if any condition applies:
 
 - the answer needs two or more independent primary sources;
 - the expected ledger has at least five factual or quantitative claims;
 - a code change spans at least three files or commits;
 - the deliverable is a diagram, HTML page, or video and evidence checking can run while the root builds it.
 
-Use one subagent for a smaller task that still benefits from an independent check. Use none when one short source settles the answer, the steps form one ordered chain, or the whole task should take less than about one minute. Do not create work merely to satisfy a count.
-
-Delegate independent, read-only evidence streams. Keep synthesis and the final deliverable in the root agent.
+Use one for a smaller independent check. Use none for one short source, an ordered chain, or work under about one minute. Keep synthesis and the deliverable in the root.
 
 | Subject | Useful parallel split |
 |---|---|
@@ -40,12 +36,11 @@ Delegate independent, read-only evidence streams. Keep synthesis and the final d
 | Benchmark or incident | reported numbers; alternative causes and missing evidence |
 | Agent output | claims and sources; contradiction and scope check |
 
-- Keep the user's prompt and the main decision-changing source in the root agent. Assign every other source, file range, or hypothesis to exactly one owner. For a mixed benchmark-and-code task, one subagent owns runtime code and one owns reported numbers plus counter-evidence.
-- Give each subagent a bounded question and request at most 10 ledger rows and 5 risks in the form `claim | source | status | scope`. Ask for no narrative or deliverable editing.
-- Keep working while subagents run. Build the outline, inspect the main source, or prepare the output shell instead of waiting immediately.
-- Subagents do not spawn descendants, edit the repository, or commit and push. The root agent owns the claim ledger, shared output files, validation, and delivery.
-- Give agents the live-state snapshot or source excerpt already fetched by the root. Tell them not to reread another agent's assigned source unless they found a concrete contradiction.
-- Reconcile duplicate or conflicting findings before writing. Stop parallel research when every material and quantitative claim has adequate evidence; do not wait for exhaustive background.
+- Root keeps the prompt and main decision-changing source. Give every other source, file range, or hypothesis one owner. For benchmark plus code, assign runtime code to one agent and numbers plus counter-evidence to the other.
+- Give each agent one bounded question. Request at most 10 rows and 5 risks as `claim | source | status | scope`; no narrative or file edits.
+- Root works while agents run. Subagents do not spawn descendants, edit, commit, or push. Root owns the ledger, files, validation, and delivery.
+- Share snapshots already fetched. Do not reread another owner's source without a concrete contradiction.
+- Reconcile conflicts. Stop when every material and quantitative claim has adequate evidence.
 - If subagent tools are unavailable, use the same evidence split with batched tool calls. Never imply that subagents ran.
 
 ## 3. Check facts before writing
@@ -67,12 +62,11 @@ A clear explanation of a wrong fact misleads more than a vague one.
 
 ### Fast path
 
-- Read the smallest source region that can settle a claim. Expand only when context changes its meaning.
-- Batch independent searches, file reads, and live-state checks. Do not repeat a source fetch in the root agent when a subagent returned the required source location and evidence.
-- For a PR, run `pr_facts.sh` once and share that snapshot. Do not let every agent repeat the same API calls.
-- Verify decision-changing claims and numbers first. Draft from verified results while secondary checks finish.
-- Load only the reference for the selected output format. The root runs cheap local validators directly; delegating them usually costs more than running them. Validate the frozen final draft once, then rerun only when a fix can affect the result.
-- Return the answer as soon as the evidence threshold above is met. Put optional follow-up analysis after the usable result, not before it.
+- Read the smallest decisive source region. Batch independent searches, reads, and live checks; do not fetch evidence twice.
+- For a PR, run `pr_facts.sh` once and share its snapshot.
+- Verify decision-changing claims and numbers first. Draft while secondary checks finish.
+- Load only the selected format reference. Root runs cheap validators on the frozen draft once; rerun only after relevant fixes.
+- Return when the evidence threshold is met. Put optional analysis after the usable result.
 
 ## 4. Know the reader
 
