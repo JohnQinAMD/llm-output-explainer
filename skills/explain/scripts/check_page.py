@@ -131,6 +131,11 @@ def main(path, standalone=False):
             warn("a <figure> with an SVG has no <figcaption> stating its claim")
             break
 
+    # Placeholders left over from assets/skeleton.html.
+    left = re.findall(r"REPLACE[^<\n]{0,40}", html)
+    if left:
+        warn(f"{len(left)} skeleton placeholder(s) left, first: {left[0]!r}")
+
     # Things the viewer refuses.
     for bad, why in (("window.print(", "print is blocked"), ("alert(", "alert is never shown"),
                      ("confirm(", "confirm returns false"), ("<iframe", "other sites cannot be embedded")):

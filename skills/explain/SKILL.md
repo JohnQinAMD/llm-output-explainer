@@ -25,9 +25,9 @@ Decide the split before deep reading; do not ask the user to opt in. When subage
 - the answer needs two or more independent primary sources;
 - the expected ledger has at least five factual or quantitative claims;
 - a code change spans at least three files or commits;
-- the deliverable is a diagram, HTML page, or video and evidence checking can run while the root builds it.
+- the deliverable is a diagram, HTML page, or video.
 
-Use one for a smaller independent check. Use none for one short source, an ordered chain, or work under about one minute. Keep synthesis and the deliverable in the root.
+Use one for a smaller independent check. Use none for one short source, an ordered chain, or work under about one minute. Keep synthesis and the ledger in the root. Section 5 hands a page, diagram, or video to one background builder.
 
 | Subject | Useful parallel split |
 |---|---|
@@ -38,7 +38,7 @@ Use one for a smaller independent check. Use none for one short source, an order
 
 - Root keeps the prompt and main decision-changing source. Give every other source, file range, or hypothesis one owner. For benchmark plus code, assign runtime code to one agent and numbers plus counter-evidence to the other.
 - Give each agent one bounded question. Request at most 10 rows and 5 risks as `claim | source | status | scope`; no narrative or file edits.
-- Root works while agents run. Subagents do not spawn descendants, edit, commit, or push. Root owns the ledger, files, validation, and delivery.
+- Root works while agents run. Evidence agents do not spawn descendants, edit, commit, or push. Root owns the ledger, the brief, and delivery. The builder owns only its output files and their checks.
 - Share snapshots already fetched. Do not reread another owner's source without a concrete contradiction.
 - Reconcile conflicts. Stop when every material and quantitative claim has adequate evidence.
 - If subagent tools are unavailable, use the same evidence split with batched tool calls. Never imply that subagents ran.
@@ -49,7 +49,7 @@ A clear explanation of a wrong fact misleads more than a vague one.
 
 - **Read primary sources:** the code that runs (dispatch, launch sites, constants), the logs, the paper. Comments, old PR bodies and memory describe some earlier state.
 - **Check live state first.** For a PR, run `scripts/pr_facts.sh <owner/repo> <N> [checkout] [body-file]`, which reads the PR from the GitHub API. A PR can merge after your notes were written.
-- **Keep a claim ledger:** one line per fact, with its source (`file:line`, commit, URL) and a status. The statuses are verified, corrected, unsupported, and unverifiable. "Corrected" also covers a claim made more precise. A fact computed from sourced inputs counts as verified. Cut unsupported claims. Label unverifiable ones on the page.
+- **Keep a claim ledger:** one line per fact, with its source (`file:line`, commit, URL) and a status. The statuses are verified, corrected, unsupported, and unverifiable. "Corrected" also covers a claim made more precise. A fact computed from sourced inputs counts as verified. Cut unsupported claims. Label unverifiable ones on the page. If a page or video may follow, write the ledger to a file as you go.
 - **Figures are claims too.** Every arrow, label and on-screen number needs a source.
 - **Numbers keep their conditions:** hardware, settings, the version measured, and what it was compared against.
 - **Simulated data gets labeled.** When you simulate, run the real algorithm on made-up inputs.
@@ -62,10 +62,10 @@ A clear explanation of a wrong fact misleads more than a vague one.
 
 ### Fast path
 
-- Read the smallest decisive source region. Batch independent searches, reads, and live checks; do not fetch evidence twice.
+- Read the smallest decisive source region. Batch independent searches, reads, and live checks; do not fetch evidence twice. If a web fetch times out, use `curl`.
 - For a PR, run `pr_facts.sh` once and share its snapshot.
 - Verify decision-changing claims and numbers first. Draft while secondary checks finish.
-- Load only the selected format reference. Root runs cheap validators on the frozen draft once; rerun only after relevant fixes.
+- Load only the selected format reference. Run cheap validators on the frozen draft once (the builder does this for pages); rerun only after relevant fixes.
 - Return when the evidence threshold is met. Put optional analysis after the usable result.
 
 ## 4. Know the reader
@@ -80,9 +80,8 @@ A new reader needs a new outline; changing the wording is not enough. To meet a 
 
 ## 5. Produce
 
-- **Controlled English:** `references/ste-writing.md` (Issue 9 rules). `scripts/ste_lint.py [--strict] file` flags common breaks.
-- **Diagram or page:** read `references/html-page.md`. Start from `assets/skeleton.html`, check with `scripts/check_page.py`, then publish as an Artifact or deliver a standalone file, according to the tools available.
-- **Video:** `references/video.md`.
+- **Controlled English:** write it in chat. `references/ste-writing.md` has the Issue 9 rules, and `scripts/ste_lint.py [--strict] file` flags breaks.
+- **Diagram, page, or video:** do not build it in the root, and do not ask. Write `<work dir>/<name>.brief.md` with the fields in `references/build.md`, including the full ledger and copies of the fetched sources. Start a general-purpose subagent in the background (in Claude Code, the Agent tool with `run_in_background: true`) with the prompt "Read `<skill dir>/references/build.md` and follow it for the brief at `<brief path>`." Tell the user in one line, keep working, and relay its report as in section 6. For a video, get the plan from `references/video.md` step 2 approved in chat first. Without background subagents, follow `build.md` yourself.
 
 ## 6. Deliver
 

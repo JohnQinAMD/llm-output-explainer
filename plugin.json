@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "llm-output-explainer",
-  "version": "0.3.0",
-  "description": "Explain code, papers, PRs and results with source-checked claims and parallel evidence gathering when subagents are available.",
+  "version": "0.4.0",
+  "description": "Explain code, papers, PRs and results with source-checked claims, parallel evidence gathering, and background page builds when subagents are available.",
   "author": {
     "name": "JohnQinAMD",
     "url": "https://github.com/JohnQinAMD"

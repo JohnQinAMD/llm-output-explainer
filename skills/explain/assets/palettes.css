@@ -1,0 +1,76 @@
+/* Palettes for assets/skeleton.html. scripts/new_page.py copies one of them between palette:start and palette:end.
+   Each accent/hot pair was validated in both themes against its panel color: OKLCH lightness band, chroma floor,
+   adjacent-pair separation under simulated protan/deutan vision, normal-vision separation, and 3:1 contrast.
+   Change a hue only if the page needs it, and then re-validate the pair. */
+
+/* palette: signal  Blue for the new path, orange for what changed. The default. */
+:root {
+  --bg: #F3F5F8; --panel: #FFFFFF; --ink: #121821; --ink-2: #47505E; --muted: #687182;
+  --line: #DCE1E8; --line-strong: #BFC7D2;
+  --accent: #2a78d6; --accent-ink: #1c5cab; --accent-wash: #E7EFFA;   /* the new path */
+  --hot: #eb6834; --hot-ink: #B2461A; --hot-wash: #FCEBE3;            /* what changed / what breaks */
+  --mark-neutral: #B3BAC5; --code-bg: #E9EDF2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1115; --panel: #151A21; --ink: #E7EBF1; --ink-2: #A9B2BF; --muted: #848E9C;
+    --line: #262D37; --line-strong: #39424F; --accent: #3987e5; --accent-ink: #84B4F2; --accent-wash: #16253A;
+    --hot: #d95926; --hot-ink: #F2905F; --hot-wash: #33201A; --mark-neutral: #4C5563; --code-bg: #1D232C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1115; --panel: #151A21; --ink: #E7EBF1; --ink-2: #A9B2BF; --muted: #848E9C;
+  --line: #262D37; --line-strong: #39424F; --accent: #3987e5; --accent-ink: #84B4F2; --accent-wash: #16253A;
+  --hot: #d95926; --hot-ink: #F2905F; --hot-wash: #33201A; --mark-neutral: #4C5563; --code-bg: #1D232C;
+  color-scheme: dark;
+}
+/* end palette */
+
+/* palette: trace  Teal for the new path, rust for overhead. Suits timelines, profiler traces and hardware. */
+:root {
+  --bg: #F2F4F3; --panel: #FFFFFF; --ink: #101716; --ink-2: #44504D; --muted: #66726F;
+  --line: #D9DFDD; --line-strong: #B9C3C0;
+  --accent: #00908A; --accent-ink: #006B67; --accent-wash: #DFF0EE;   /* the new path */
+  --hot: #C9561C; --hot-ink: #A3410F; --hot-wash: #FBE8DE;            /* overhead / what breaks */
+  --mark-neutral: #9AA6A2; --code-bg: #E5EAE8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1211; --panel: #141B1A; --ink: #E5ECEA; --ink-2: #A7B3B0; --muted: #83908C;
+    --line: #24302E; --line-strong: #36443F; --accent: #2BA6A3; --accent-ink: #7FD0CC; --accent-wash: #11302F;
+    --hot: #D96C28; --hot-ink: #F29A6A; --hot-wash: #35211A; --mark-neutral: #5A6763; --code-bg: #1B2422;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1211; --panel: #141B1A; --ink: #E5ECEA; --ink-2: #A7B3B0; --muted: #83908C;
+  --line: #24302E; --line-strong: #36443F; --accent: #2BA6A3; --accent-ink: #7FD0CC; --accent-wash: #11302F;
+  --hot: #D96C28; --hot-ink: #F29A6A; --hot-wash: #35211A; --mark-neutral: #5A6763; --code-bg: #1B2422;
+  color-scheme: dark;
+}
+/* end palette */
+
+/* palette: ink  Violet for the new path, amber for what changed. Suits papers, math and algorithms. */
+:root {
+  --bg: #F4F3F7; --panel: #FFFFFF; --ink: #15131C; --ink-2: #4A4757; --muted: #6C6879;
+  --line: #DEDBE6; --line-strong: #C3BFCF;
+  --accent: #6E52CF; --accent-ink: #5137A8; --accent-wash: #EEEAFB;   /* the new path */
+  --hot: #BF7F0A; --hot-ink: #8F5D00; --hot-wash: #FBF1DC;            /* what changed / what breaks */
+  --mark-neutral: #ABA6B8; --code-bg: #E9E7EF;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #110F17; --panel: #17151F; --ink: #E9E7F0; --ink-2: #ADA8BB; --muted: #8A8599;
+    --line: #27242F; --line-strong: #3A3645; --accent: #8A72E8; --accent-ink: #B9A9F5; --accent-wash: #231D3A;
+    --hot: #BE8420; --hot-ink: #E8B460; --hot-wash: #2E2414; --mark-neutral: #575265; --code-bg: #1F1C28;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #110F17; --panel: #17151F; --ink: #E9E7F0; --ink-2: #ADA8BB; --muted: #8A8599;
+  --line: #27242F; --line-strong: #3A3645; --accent: #8A72E8; --accent-ink: #B9A9F5; --accent-wash: #231D3A;
+  --hot: #BE8420; --hot-ink: #E8B460; --hot-wash: #2E2414; --mark-neutral: #575265; --code-bg: #1F1C28;
+  color-scheme: dark;
+}
+/* end palette */

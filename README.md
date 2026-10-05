@@ -74,7 +74,7 @@ The skill picks a format from the request. If you name one ("explain in STE", "m
 ## What it adds
 
 - **The skill checks facts first.** It keeps a claim ledger: each claim, its source (`file:line`, commit, URL) and a status. Every arrow, label and number in a figure counts as a claim too. The skill cuts unsupported claims and tells you about corrected ones.
-- **Independent checks run in parallel.** On a multi-agent host, the skill automatically delegates bounded, read-only evidence streams while the root agent prepares the explanation. The root agent keeps ownership of the final file, so subagents do not contend over shared output.
+- **Independent checks run in parallel.** On a multi-agent host, the skill automatically delegates bounded, read-only evidence streams while the root agent prepares the explanation. Evidence agents are read-only, and one background builder owns the page file, so agents do not contend over shared output.
 - **Live state before notes.** For a pull request, `scripts/pr_facts.sh` reads the current state from the GitHub API. It shows whether the PR merged, the head SHA, each commit, and the trailers on the merge commit.
 - **STE rules checked against the standard.** `references/ste-writing.md` cites the rule numbers of ASD-STE100 Issue 9 (2025-01-15). `scripts/ste_lint.py` flags common rule breaks and names the rule for each.
 - **Pages check themselves.** The starter page includes `selfCheck()`, which flags overflow, overlapping labels and text that is too small, at any screen width. Add `#selfcheck` to the URL to outline the problems. `scripts/check_page.py` checks the page before you publish it.
@@ -120,7 +120,7 @@ Subagent delegation is automatic when the host exposes multi-agent tools and per
 
 - The root keeps the prompt and main source, then gives every remaining source to one owner. Agents do not duplicate the same search.
 - Two read-only subagents are the default for multi-source work. Small or sequential tasks stay single-agent because orchestration would make them slower.
-- Subagents return compact ledger rows, not prose drafts. The root writes once and does not merge competing output files.
+- Evidence subagents return compact ledger rows, not prose drafts. One builder writes the page once from the brief, so there are no competing output files to merge.
 - The root prepares the outline while evidence checks run, verifies decision-changing claims first, and stops research when every material claim has adequate evidence.
 - Only the selected format guide is loaded. Cheap local validators run directly on the frozen final draft instead of becoming another delegated task.
 
@@ -137,6 +137,8 @@ Or copy `skills/explain/` to `~/.claude/skills/explain/`.
 
 Ask in plain words. The skill loads when the request fits. To call it directly, use `/llm-output-explainer:explain` (plugin) or `/explain` (copied skill).
 
+A page, diagram or video is built in a background subagent. The skill checks the facts and answers in chat. Then it writes a brief with the claim ledger and hands the build to the subagent, so you can continue to work. The link arrives when the build is done. Without a background subagent, the skill builds the page itself.
+
 ```
 explain in STE how the scheduler picks which requests run in a step
 make an interactive page for online softmax
@@ -149,10 +151,13 @@ summarize PR 1234 in vllm-project/vllm for the reviewers
 skills/explain/
 ├── SKILL.md                    the workflow: format, fact check, reader, delivery
 ├── references/ste-writing.md   ASD-STE100 Issue 9 rules and dictionary notes
+├── references/build.md         what the background builder does with a brief
 ├── references/html-page.md     page workflow, figure rules, page sections
 ├── references/video.md         narrated video steps
-├── assets/skeleton.html        starter page: themes, figures, self-check
+├── assets/skeleton.html        starter page: themes, chart helpers, self-check
+├── assets/palettes.css         three validated palettes, light and dark
 └── scripts/
+    ├── new_page.py             starts a page from the skeleton and a palette
     ├── check_page.py           checks an Artifact fragment or standalone page
     ├── ste_lint.py             flags STE rule breaks
     └── pr_facts.sh             live state of a GitHub pull request
@@ -165,6 +170,7 @@ skills/explain/
 - Python 3 for the scripts. `check_page.py` installs `esprima` into `~/.cache/llm-output-explainer/` the first time it parses JavaScript.
 - `curl` for `pr_facts.sh`. To raise the GitHub API rate limit, set `GH_TOKEN_FILE` to a file that holds a token.
 - Optional: Docker, for a headless browser check or for video (`manimcommunity/manim`).
+- For background builds, a host that runs subagents in the background, such as Claude Code.
 
 ## Notes on STE
 

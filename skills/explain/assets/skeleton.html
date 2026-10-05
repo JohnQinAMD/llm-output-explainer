@@ -1,20 +1,18 @@
 <title>REPLACE: Name Of The Thing</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- REPLACE the families with a pairing chosen for this subject (display + body + mono). -->
+<!-- Fonts: display + body + mono. The default pairing fits most pages; swap the families and the font tokens only if the subject needs it. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <style>
 /* Layout: REPLACE with this page's one-line layout concept. */
-/* Token names are the contract the rest of the CSS and the SVG classes use. Re-pick the values for each page. */
+/* palette:start  Token names are the contract the rest of the CSS and the SVG classes use.
+   scripts/new_page.py swaps this region for a validated preset from assets/palettes.css. */
 :root {
   --bg: #F3F5F8; --panel: #FFFFFF; --ink: #121821; --ink-2: #47505E; --muted: #687182;
   --line: #DCE1E8; --line-strong: #BFC7D2;
   --accent: #2a78d6; --accent-ink: #1c5cab; --accent-wash: #E7EFFA;   /* the new path */
   --hot: #eb6834; --hot-ink: #B2461A; --hot-wash: #FCEBE3;            /* what changed / what breaks */
   --mark-neutral: #B3BAC5; --code-bg: #E9EDF2;
-  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
-  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -29,6 +27,12 @@
   --line: #262D37; --line-strong: #39424F; --accent: #3987e5; --accent-ink: #84B4F2; --accent-wash: #16253A;
   --hot: #d95926; --hot-ink: #F2905F; --hot-wash: #33201A; --mark-neutral: #4C5563; --code-bg: #1D232C;
   color-scheme: dark;
+}
+/* palette:end */
+:root {
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font: 400 17px/1.62 var(--font-body); }
@@ -98,6 +102,7 @@ svg text.sc-bad { fill: var(--hot) !important; }
 </style>
 
 <div class="wrap">
+<!-- content:start  Replace everything down to content:end with the page. Keep the CSS above and the script below. -->
   <header>
     <p class="eyebrow">owner/repo · PR <a href="https://github.com/OWNER/REPO/pull/N">#N</a> · AREA</p>
     <h1>REPLACE: what the change does</h1>
@@ -139,6 +144,7 @@ svg text.sc-bad { fill: var(--hot) !important; }
       <figcaption>REPLACE: the one claim this chart shows, with its conditions.</figcaption>
     </figure>
   </section>
+<!-- content:end -->
 </div>
 
 <script>
@@ -167,38 +173,78 @@ svg text.sc-bad { fill: var(--hot) !important; }
       "H" + (x + w - r) + "Q" + (x + w) + "," + top + " " + (x + w) + "," + (top + r) + "V" + base + "Z";
   }
 
-  // Grouped before/after bars. rows: [{label, a, b}], unit: "µs".
+  function txt(attrs, s, parent) { var t = el("text", attrs, parent); t.textContent = s; return t; }
+  function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+  // Horizontal bar with a 4px rounded right end, anchored at x0.
+  function hbarPath(x0, y, w, h, r) {
+    r = Math.min(r, h / 2, w);
+    return "M" + x0 + "," + y + "H" + (x0 + w - r) + "Q" + (x0 + w) + "," + y + " " + (x0 + w) + "," + (y + r) +
+      "V" + (y + h - r) + "Q" + (x0 + w) + "," + (y + h) + " " + (x0 + w - r) + "," + (y + h) + "H" + x0 + "Z";
+  }
+
+  // Grouped bars, one neutral series (a) and one accent series (b). rows: [{label, a, b}].
+  // opts: yMax, step, unit, aName, bName; optional labelIdx (rows that get direct value labels,
+  // default first and last) and fmt (value -> label text). Clears the svg first, so call it again to redraw.
   function groupedBars(svg, fig, rows, opts) {
-    var W = 640, L = 52, R = 16, T = 18, B = 222, yMax = opts.yMax, step = opts.step, bw = 40;
-    var tip = makeTip(fig);
+    clear(svg);
+    var W = 640, L = 52, R = 16, T = 18, B = 222, yMax = opts.yMax, step = opts.step;
+    var cw = (W - L - R) / rows.length, bw = Math.min(40, (cw - 12) / 2), fmt = opts.fmt || String;
+    var labelIdx = opts.labelIdx || [0, rows.length - 1];
+    var tip = fig._tip || (fig._tip = makeTip(fig));
     function y(v) { return B - (v / yMax) * (B - T); }
     for (var v = 0; v <= yMax; v += step) {
       el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: v === 0 ? "var(--line-strong)" : "var(--line)" }, svg);
-      el("text", { x: L - 8, y: y(v) + 4, "text-anchor": "end", class: "sv-lab" }, svg).textContent = v;
+      txt({ x: L - 8, y: y(v) + 4, "text-anchor": "end", class: "sv-lab" }, String(v), svg);
     }
-    el("text", { x: L + 4, y: T - 6, "text-anchor": "start", class: "sv-lab" }, svg).textContent = opts.unit;
-    var cw = (W - L - R) / rows.length;
+    txt({ x: L + 4, y: T - 6, "text-anchor": "start", class: "sv-lab" }, opts.unit, svg);
     rows.forEach(function (d, i) {
       var cx = L + cw * (i + 0.5);
       [["a", cx - bw - 1, "var(--mark-neutral)", opts.aName], ["b", cx + 1, "var(--accent)", opts.bName]].forEach(function (s) {
         var val = d[s[0]], x = s[1];
         el("path", { d: barPath(x, bw, y(val), B, 4), fill: s[2] }, svg);
+        if (labelIdx.indexOf(i) >= 0) txt({ x: x + bw / 2, y: y(val) - 6, "text-anchor": "middle", class: "sv-lab" }, fmt(val), svg);
         var hit = el("rect", { x: x - 2, y: T, width: bw + 4, height: B - T, fill: "transparent" }, svg);
-        hit.addEventListener("mousemove", function (e) { showTip(tip, fig, e, "<b>" + d.label + "</b><br>" + s[3] + ": " + val + " " + opts.unit); });
+        hit.addEventListener("mousemove", function (e) { showTip(tip, fig, e, "<b>" + d.label + "</b><br>" + s[3] + ": " + fmt(val) + " " + opts.unit); });
         hit.addEventListener("mouseleave", function () { tip.hidden = true; });
       });
-      el("text", { x: cx, y: B + 20, "text-anchor": "middle", class: "sv-lab" }, svg).textContent = d.label;
+      txt({ x: cx, y: B + 20, "text-anchor": "middle", class: "sv-lab" }, d.label, svg);
     });
   }
 
+  // Ranked horizontal bars: one row per system, the highlighted row in accent. rows: [{label, v, hi}].
+  // opts: xMax, step, unit. Give the svg a viewBox of "0 0 640 H" with H = 52 + 34 * rows.length.
+  function hBars(svg, fig, rows, opts) {
+    clear(svg);
+    var W = 640, L = 232, R = 56, T = 10, rowH = 34, barH = 16, xMax = opts.xMax;
+    var tip = fig._tip || (fig._tip = makeTip(fig));
+    function x(v) { return L + (v / xMax) * (W - L - R); }
+    var yB = T + rows.length * rowH;
+    for (var v = 0; v <= xMax; v += opts.step) {
+      el("line", { x1: x(v), x2: x(v), y1: T, y2: yB, stroke: v === 0 ? "var(--line-strong)" : "var(--line)" }, svg);
+      txt({ x: x(v), y: yB + 16, "text-anchor": "middle", class: "sv-lab" }, String(v), svg);
+    }
+    txt({ x: W - R, y: yB + 32, "text-anchor": "end", class: "sv-lab" }, opts.unit, svg);
+    rows.forEach(function (d, i) {
+      var y = T + i * rowH + (rowH - barH) / 2;
+      txt({ x: L - 10, y: y + 12, "text-anchor": "end", class: "sv-sub" }, d.label, svg);
+      el("path", { d: hbarPath(x(0), y, x(d.v) - x(0), barH, 4), fill: d.hi ? "var(--accent)" : "var(--mark-neutral)" }, svg);
+      txt({ x: x(d.v) + 6, y: y + 12, class: "sv-mono" }, String(d.v), svg);
+      var hit = el("rect", { x: L, y: T + i * rowH, width: W - L - R + 40, height: rowH, fill: "transparent" }, svg);
+      hit.addEventListener("mousemove", function (e) { showTip(tip, fig, e, "<b>" + d.label + "</b><br>" + d.v + " " + opts.unit); });
+      hit.addEventListener("mouseleave", function () { tip.hidden = true; });
+    });
+  }
+
+  // Seeded PRNG for simulations, so every reader sees the same first view.
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  void mulberry32; void reduceMotion; void hBars;
+
+  // page:start  Page-specific code goes here. Keep the helpers above and the self-check below.
   // Placeholder numbers; replace with real ones and repeat them in a table under the chart.
   groupedBars(document.getElementById("chart"), document.getElementById("chart-fig"),
     [{ label: "small input", a: 8, b: 6 }, { label: "large input", a: 40, b: 12 }],
     { yMax: 50, step: 10, unit: "ms", aName: "before", bName: "after" });
-
-  // Seeded PRNG for simulations, so every reader sees the same first view.
-  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-  void mulberry32; void reduceMotion;
+  // page:end
 
   // Linked terms: hovering or focusing a name lights up every element with the same data-ref.
   function linkRefs() {

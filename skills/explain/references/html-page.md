@@ -4,8 +4,8 @@ A page is one HTML file. Publish it as a private Artifact when an Artifact tool 
 
 ## Workflow
 
-1. **Choose delivery:** if an Artifact tool is available, load its page guidance and use its required document format. Load any available diagramming guidance before drawing SVG and data-visualization guidance before charts. If no Artifact tool is available, make a standalone HTML document in the user's workspace.
-2. **Start the file:** copy `assets/skeleton.html` to a scratch or work directory with free space, as `<short-name>.html`. It has the light and dark theme tokens, SVG classes, a tooltip, a bar-chart helper, the verification strip, linked terms and the self-check. Choose a palette and fonts for this subject. For a standalone file, add `<!doctype html>`, `<html lang="en">`, `<head>`, and `<body>` around the fragment; keep the title, links, and styles in the head and the visible page plus scripts in the body.
+1. **Choose delivery:** if an Artifact tool is available, use its required document format (an HTML fragment). Otherwise, make a standalone HTML document in the user's workspace. The skeleton already follows the usual page, diagram and chart rules, so load other design guidance only for a figure type the skeleton does not have.
+2. **Start the file:** run `python3 scripts/new_page.py <work dir>/<short-name>.html --title "<Name>" --palette <signal|trace|ink>`, with `--standalone --lang <code>` for a standalone document. It copies `assets/skeleton.html`, which has the theme tokens, SVG classes, a tooltip, chart helpers (`groupedBars`, `hBars`), the verification strip, linked terms and the self-check. It also swaps in a validated palette from `assets/palettes.css`. Then edit only the marked regions, `content:start`–`content:end` and `page:start`–`page:end`. Never retype the CSS or scripts. Keep the default fonts unless the subject needs others.
 3. **Title:** use the name of the thing ("Online Softmax"), not "X explainer".
 4. **Check:** for an Artifact fragment, run `python3 scripts/check_page.py <page.html>`. For a standalone document, add `--standalone`. Fix every FAIL.
 5. **Deliver:** publish through the Artifact tool when available. Otherwise, keep the standalone file in the workspace and give the user a clickable file link or path. Do not claim that a local file was published.
@@ -43,7 +43,7 @@ Rules:
 ## Self-check and pitfalls
 
 - The skeleton's `selfCheck()` runs on load. Overflow and overlapping SVG labels FAIL; labels under 10 px WARN. Add `#selfcheck` to the page URL to outline the problems in red. `check_page.py` can't see layout, so this is the only overflow check.
-- To check without opening the page, run headless Chrome (the `zenika/alpine-chrome` image) with `--dump-dom` at `--window-size=390,2600` and `1280,1700`, and read `<pre id="selfcheck-report">`. If the local machine has no browser or no disk space for the image, run it on another host.
+- A headless browser check is optional, and is worth it only when a browser starts in seconds. Run headless Chrome (for example, the `zenika/alpine-chrome` image) with `--dump-dom` at `--window-size=390,2600` and `1280,1700`, in the light theme, with a 90 s timeout on each run. Then read `<pre id="selfcheck-report">`. Do not take full-page screenshots, because a tall window can hang the browser for minutes.
 - Long paths or identifiers push the page sideways on phones; give their container `overflow-wrap: anywhere`.
 - Color SVG elements through theme-token classes, never literal hex, or dark mode breaks.
 - Use `.list > li`, not `.list li`, so nested bullets don't inherit row styles.
