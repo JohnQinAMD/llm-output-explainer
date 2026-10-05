@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Start a page from assets/skeleton.html, so the CSS and scripts are copied, not retyped.
 
-Usage: new_page.py <out.html> --title "Name" [--palette signal|trace|ink] [--lang en] [--standalone] [--force]
+Usage: new_page.py <out.html> --title "Name" [--palette signal|trace|ink] [--layout "..."] [--lang en] [--standalone] [--force]
 
 It sets the <title>, swaps in a validated palette from assets/palettes.css, and with
 --standalone wraps the fragment in a full HTML document. Then edit only the regions
@@ -30,6 +30,8 @@ def main():
     ap.add_argument("out")
     ap.add_argument("--title", required=True, help="the name of the thing, two to four words")
     ap.add_argument("--palette", default="signal")
+    ap.add_argument("--layout", default="one column of sections; each figure spans the column",
+                    help="the one-line layout concept, written into the CSS")
     ap.add_argument("--lang", default="en", help="page language, for --standalone")
     ap.add_argument("--standalone", action="store_true", help="write a full HTML document instead of an Artifact fragment")
     ap.add_argument("--force", action="store_true", help="overwrite an existing file")
@@ -43,6 +45,7 @@ def main():
 
     page = open(os.path.join(ASSETS, "skeleton.html"), encoding="utf-8").read()
     page = re.sub(r"<title>.*?</title>", lambda _: f"<title>{a.title}</title>", page, count=1, flags=re.S)
+    page = page.replace("/* Layout: REPLACE with this page's one-line layout concept. */", f"/* Layout: {a.layout}. */", 1)
     start = page.index("/* palette:start")
     start = page.index("*/", start) + 3
     end = page.index("/* palette:end */")
