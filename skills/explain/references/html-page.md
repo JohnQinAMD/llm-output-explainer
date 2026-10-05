@@ -22,11 +22,18 @@ Pick the figure by what the reader must see:
 | how a result depends on a setting | a live figure redrawn from one `model(settings)` function |
 | numbers across sizes or over time | bars or a line chart, with the same numbers in a table |
 
+**Draw diagrams with the helpers** in the skeleton's script, because planning coordinates by hand takes most of the build time. Describe the structure, and the code places it:
+- `ring`: nodes on a circle. `fan`: arrows from one node to many. `arrow` and `node`: single parts.
+- `flow`: boxes in columns, with labeled right-angle edges.
+- `lanes`: a timeline. `stepStrip`: numbered steps in groups.
+
+Then call `fitViewBox(svg)`, which sizes the canvas. Put an empty `<svg id="…" class="wide" viewBox="0 0 10 10" role="img" aria-label="…">` in the markup, and draw into it from the page script. Place SVG by hand only for a shape that the helpers cannot make.
+
 Rules:
 - One claim per figure, stated in the `<figcaption>` and the SVG's `aria-label`.
 - A verb on every arrow (`writes`, `reads`); a noun only for data (`Q, KW`).
 - One accent color for what is new or what the figure is about.
-- Sketch the layout on a grid before writing coordinates. Columns go 200–240 units apart, labels stay under about 18 characters, and labels render at 11 px or more.
+- For a hand-placed figure, sketch the layout on a grid before writing coordinates. Columns go 200–240 units apart, labels stay under about 18 characters, and labels render at 11 px or more.
 - Wide figures go in a `.scroll` wrapper with a `min-width`, so phones scroll instead of shrinking the text.
 
 ## Page sections (use only the ones the subject needs)

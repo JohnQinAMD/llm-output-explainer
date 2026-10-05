@@ -47,6 +47,7 @@ The main conversation writes `<work dir>/<name>.brief.md` with these fields:
 3. **Write only the marked regions:** from `content:start` to `content:end`, and from `page:start` to `page:end`. Use Edit, or one short splice script. Never retype the CSS, the helpers or `selfCheck()`. Use these helpers:
    - `groupedBars`: two series. To switch modes, redraw it.
    - `hBars`: ranked systems.
+   - `ring`, `fan`, `arrow`, `node`, `flow`, `lanes`, `stepStrip`: diagrams drawn from their structure, then `fitViewBox`. Use them instead of planning coordinates.
    - `mulberry32`: seeded simulations.
    - `data-ref`: linked terms.
 4. **Use only claims from the ledger.** Copy the brief's counts into the verification strip. For a claim that is not in the ledger, cut it, or label it on the page as background or a guess.

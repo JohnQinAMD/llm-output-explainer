@@ -69,7 +69,10 @@ figcaption { font-size: 14.5px; line-height: 1.55; color: var(--ink-2); margin-t
 .tag { fill: var(--accent); }
 .ln { stroke: var(--ink-2); stroke-width: 1.4; fill: none; }
 .ln-hot { stroke: var(--hot); stroke-width: 1.8; fill: none; }
-.mk { fill: var(--ink-2); } .mk-hot { fill: var(--hot); }
+.mk { fill: var(--ink-2); } .mk-hot { fill: var(--hot); } .mk-acc { fill: var(--accent); }
+.ln-acc { stroke: var(--accent); stroke-width: 1.8; fill: none; }
+.ln-faint { stroke: var(--line-strong); stroke-width: 1; fill: none; }
+.bx-launch { fill: var(--hot-wash); stroke: var(--hot); stroke-dasharray: 3 2; }
 
 /* tables, legends, tooltip */
 .tbl-wrap { overflow-x: auto; margin: 14px 0 6px; }
@@ -234,6 +237,154 @@ svg text.sc-bad { fill: var(--hot) !important; }
       hit.addEventListener("mouseleave", function () { tip.hidden = true; });
     });
   }
+
+  // ---------- Diagram helpers: describe the structure, and the code places it. ----------
+  // Each helper returns positions, so arrow() can join shapes that other helpers drew.
+  // Call fitViewBox(svg) after drawing, so the canvas needs no planning either.
+  var svgSeq = 0;
+  function textW(s, px) { var w = 0; for (var i = 0; i < s.length; i++) w += s.charCodeAt(i) > 0x2e80 ? 1 : 0.62; return w * px; }
+  function defs(svg) {
+    if (!svg.id) svg.id = "dg" + (++svgSeq);
+    if (!svg._defs) {
+      var d = el("defs", {}, svg);
+      [["ah", "mk"], ["ahh", "mk-hot"], ["aha", "mk-acc"]].forEach(function (m) {
+        var mk = el("marker", { id: svg.id + "-" + m[0], viewBox: "0 0 8 8", refX: 7, refY: 4, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, d);
+        el("path", { class: m[1], d: "M0,0 L8,4 L0,8 z" }, mk);
+      });
+      svg._defs = true;
+    }
+    return svg.id;
+  }
+  // Arrow from point p to point q ([x, y]). opts: kind ("" | "hot" | "acc" | "faint"), label, r1/r2 (stop short by
+  // these radii, to meet a node's edge), dashed. The label sits beside the middle of the line.
+  function arrow(svg, p, q, opts) {
+    opts = opts || {};
+    var id = defs(svg), k = opts.kind || "";
+    var dx = q[0] - p[0], dy = q[1] - p[1], d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
+    var a = opts.r1 || 0, b = (opts.r2 || 0) + 2;
+    var ln = el("line", { x1: p[0] + ux * a, y1: p[1] + uy * a, x2: q[0] - ux * b, y2: q[1] - uy * b, class: k ? "ln-" + k : "ln" }, svg);
+    if (k !== "faint") ln.setAttribute("marker-end", "url(#" + id + "-" + (k === "hot" ? "ahh" : k === "acc" ? "aha" : "ah") + ")");
+    if (opts.dashed) ln.setAttribute("stroke-dasharray", "4 3");
+    if (opts.label) txt({ x: (p[0] + q[0]) / 2 + uy * 10, y: (p[1] + q[1]) / 2 - ux * 10 + 4, "text-anchor": "middle", class: "sv-lab" }, opts.label, svg);
+    return ln;
+  }
+  // A labeled node at (x, y): a circle, or a box with opts.shape "box". kind: "" | "new" | "bad" | "store" | "launch".
+  function node(svg, x, y, label, opts) {
+    opts = opts || {};
+    var r = opts.r || 17, cls = opts.kind ? "bx-" + opts.kind : "bx", g = el("g", opts.ref ? { "data-ref": opts.ref } : {}, svg);
+    if (opts.shape === "box") {
+      var w = opts.w || Math.max(2 * r, textW(label, 12.5) + 16);
+      el("rect", { x: x - w / 2, y: y - r, width: w, height: 2 * r, rx: 6, class: cls }, g);
+    } else el("circle", { cx: x, cy: y, r: r, class: cls }, g);
+    txt({ x: x, y: y + 4, "text-anchor": "middle", class: "sv-mono" }, label, g);
+    return g;
+  }
+  // Nodes on a circle, for ranks, ring all-reduce and the like. opts: labels (or n, named R0..), cx, cy, r, nodeR,
+  // edges ("next" joins each node to the next), edgeKind, kinds ({index: kind}), center ([title, subtitle]).
+  // Returns the node centers, with .r set to the node radius, for arrow() and fan().
+  function ring(svg, opts) {
+    var labels = opts.labels || [], i;
+    if (!labels.length) for (i = 0; i < opts.n; i++) labels.push("R" + i);
+    var n = labels.length, R = opts.r || 90, nr = opts.nodeR || 17, pts = [];
+    for (i = 0; i < n; i++) { var a = -Math.PI / 2 + 2 * Math.PI * i / n; pts.push([opts.cx + R * Math.cos(a), opts.cy + R * Math.sin(a)]); }
+    if (opts.edges === "next") for (i = 0; i < n; i++) arrow(svg, pts[i], pts[(i + 1) % n], { r1: nr, r2: nr, kind: opts.edgeKind });
+    pts.forEach(function (p, j) { node(svg, p[0], p[1], labels[j], { r: nr, kind: (opts.kinds || {})[j] }); });
+    if (opts.center) {
+      txt({ x: opts.cx, y: opts.cy + 2, "text-anchor": "middle", class: "sv-title" }, opts.center[0], svg);
+      if (opts.center[1]) txt({ x: opts.cx, y: opts.cy + 18, "text-anchor": "middle", class: "sv-sub" }, opts.center[1], svg);
+    }
+    pts.r = nr;
+    return pts;
+  }
+  // Arrows from one node to several, such as a one-shot push: fan(svg, pts, 0, [1, 2, 3], { kind: "acc" }).
+  function fan(svg, pts, from, to, opts) {
+    to.forEach(function (j) { arrow(svg, pts[from], pts[j], Object.assign({ r1: pts.r, r2: pts.r }, opts || {})); });
+  }
+  // Timeline lanes. rows: [{label, items: [{t0, t1, text, kind}]}], with time in any unit.
+  // opts: x, y, labelW, w (plot width), t0, t1, rowH. Text that does not fit its bar moves into a hover title.
+  // Returns {x(t), y(row), bottom}, for markers and arrows.
+  function lanes(svg, rows, opts) {
+    var X = opts.x || 0, x0 = X + (opts.labelW || 140), y0 = opts.y || 0, w = opts.w || 700, rh = opts.rowH || 30, gap = 10;
+    var T0 = opts.t0 || 0, T1 = opts.t1;
+    function sx(t) { return x0 + (t - T0) / (T1 - T0) * w; }
+    function sy(i) { return y0 + i * (rh + gap); }
+    rows.forEach(function (row, i) {
+      txt({ x: X, y: sy(i) + rh / 2 + 4, class: "sv-sub" }, row.label, svg);
+      row.items.forEach(function (it) {
+        var bx = sx(it.t0), bw = Math.max(1, sx(it.t1) - bx);
+        var r = el("rect", { x: bx, y: sy(i), width: Math.max(1, bw - 1), height: rh, rx: 3, class: it.kind ? "bx-" + it.kind : "bx" }, svg);
+        if (!it.text) return;
+        if (textW(it.text, 11.5) + 8 <= bw) txt({ x: bx + bw / 2, y: sy(i) + rh / 2 + 4, "text-anchor": "middle", class: "sv-sub" }, it.text, svg);
+        else el("title", {}, r).textContent = it.text;
+      });
+    });
+    return { x: sx, y: sy, bottom: sy(rows.length) - gap };
+  }
+  // Boxes in columns, left to right, joined by labeled arrows. cols: [[{id, text, sub, kind, ref}], ...];
+  // edges: [{from, to, label, kind}], each going to a later column. Column widths and gaps come from the text.
+  // opts: x, y, boxH, rowGap. Returns {id: {x, y, w, h}}.
+  function flow(svg, cols, edges, opts) {
+    opts = opts || {};
+    var bh = opts.boxH || 44, rg = opts.rowGap || 18, at = {}, colOf = {}, x = opts.x || 0, Y = opts.y || 0;
+    var tallest = Math.max.apply(null, cols.map(function (c) { return c.length; })), H = tallest * bh + (tallest - 1) * rg;
+    cols.forEach(function (col, i) { col.forEach(function (b) { colOf[b.id] = i; }); });
+    cols.forEach(function (col, i) {
+      var bw = Math.max.apply(null, col.map(function (b) { return Math.max(textW(b.text, 12.5), b.sub ? textW(b.sub, 11.5) : 0) + 24; }));
+      var top = Y + (H - (col.length * bh + (col.length - 1) * rg)) / 2;
+      col.forEach(function (b, j) {
+        var y = top + j * (bh + rg), g = el("g", b.ref ? { "data-ref": b.ref } : {}, svg);
+        el("rect", { x: x, y: y, width: bw, height: bh, rx: 6, class: b.kind ? "bx-" + b.kind : "bx" }, g);
+        txt({ x: x + bw / 2, y: y + (b.sub ? bh / 2 - 3 : bh / 2 + 4), "text-anchor": "middle", class: "sv-mono" }, b.text, g);
+        if (b.sub) txt({ x: x + bw / 2, y: y + bh / 2 + 13, "text-anchor": "middle", class: "sv-sub" }, b.sub, g);
+        at[b.id] = { x: x, y: y, w: bw, h: bh };
+      });
+      var labels = (edges || []).filter(function (e) { return colOf[e.from] === i && e.label; });
+      x += bw + Math.max(64, Math.max.apply(null, [0].concat(labels.map(function (e) { return textW(e.label, 11) + 28; }))));
+    });
+    // Right-angle edges: out of the source's right side, up or down after the label, into the target's left side.
+    // Several edges on one side of a box spread along it, so their labels do not stack.
+    var outs = {}, ins = {}, id = defs(svg);
+    (edges || []).forEach(function (e) { (outs[e.from] = outs[e.from] || []).push(e); (ins[e.to] = ins[e.to] || []).push(e); });
+    (edges || []).forEach(function (e) {
+      var a = at[e.from], b = at[e.to], k = e.kind || "";
+      var ya = a.y + a.h * (outs[e.from].indexOf(e) + 1) / (outs[e.from].length + 1);
+      var yb = b.y + b.h * (ins[e.to].indexOf(e) + 1) / (ins[e.to].length + 1);
+      var x1 = a.x + a.w, x2 = b.x, mx = Math.min(x2 - 14, x1 + (e.label ? textW(e.label, 11) + 16 : (x2 - x1) / 2));
+      el("path", { d: "M" + x1 + "," + ya + "H" + mx + "V" + yb + "H" + (x2 - 2), class: k ? "ln-" + k : "ln",
+        "marker-end": "url(#" + id + "-" + (k === "hot" ? "ahh" : k === "acc" ? "aha" : "ah") + ")" }, svg);
+      if (e.label) txt({ x: x1 + 6, y: ya - 6, class: "sv-lab" }, e.label, svg);
+    });
+    return at;
+  }
+  // A strip of numbered steps in groups, such as "reduce-scatter 7, all-gather 7". groups: [{label, n, kind}].
+  // opts: x, y, w and h (one step box), gap. Returns the x where the strip ends.
+  function stepStrip(svg, groups, opts) {
+    var x = opts.x || 0, y = opts.y || 0, w = opts.w || 22, h = opts.h || 22, gap = opts.gap || 4, k = 0;
+    groups.forEach(function (g) {
+      var gx = x;
+      for (var i = 0; i < g.n; i++) {
+        el("rect", { x: x, y: y, width: w, height: h, rx: 3, class: g.kind ? "bx-" + g.kind : "bx" }, svg);
+        txt({ x: x + w / 2, y: y + h / 2 + 4, "text-anchor": "middle", class: "sv-lab" }, String(++k), svg);
+        x += w + gap;
+      }
+      if (g.label) txt({ x: (gx + x - gap) / 2, y: y + h + 16, "text-anchor": "middle", class: "sv-sub" }, g.label, svg);
+      x += 3 * gap;
+    });
+    return x - 3 * gap;
+  }
+  // Fit the viewBox to the drawing plus a margin, and keep 11px labels at 10px or more on phones.
+  // The figure must be visible (not inside a closed <details>). It refits once the web fonts load.
+  function fitViewBox(svg, pad) {
+    pad = pad == null ? 12 : pad;
+    var b = svg.getBBox(), w = Math.ceil(b.width + 2 * pad), h = Math.ceil(b.height + 2 * pad);
+    if (!w || !h) return;
+    svg.setAttribute("viewBox", [Math.floor(b.x - pad), Math.floor(b.y - pad), w, h].join(" "));
+    svg.style.minWidth = Math.round(w * 0.92) + "px";
+    svg.style.maxWidth = Math.round(w * 1.15) + "px";   // a small drawing keeps its size instead of filling the column
+    svg.style.marginInline = "auto";
+    if (document.fonts && !svg._refit) { svg._refit = true; document.fonts.ready.then(function () { fitViewBox(svg, pad); }); }
+  }
+  void ring; void fan; void lanes; void flow; void stepStrip; void fitViewBox;
 
   // Seeded PRNG for simulations, so every reader sees the same first view.
   function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
