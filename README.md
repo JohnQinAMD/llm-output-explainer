@@ -74,6 +74,7 @@ The skill picks a format from the request. If you name one ("explain in STE", "m
 ## What it adds
 
 - **The skill checks facts first.** It keeps a claim ledger: each claim, its source (`file:line`, commit, URL) and a status. Every arrow, label and number in a figure counts as a claim too. The skill cuts unsupported claims and tells you about corrected ones.
+- **Independent checks run in parallel.** On a multi-agent host, the skill automatically delegates bounded, read-only evidence streams while the root agent prepares the explanation. The root agent keeps ownership of the final file, so subagents do not contend over shared output.
 - **Live state before notes.** For a pull request, `scripts/pr_facts.sh` reads the current state from the GitHub API. It shows whether the PR merged, the head SHA, each commit, and the trailers on the merge commit.
 - **STE rules checked against the standard.** `references/ste-writing.md` cites the rule numbers of ASD-STE100 Issue 9 (2025-01-15). `scripts/ste_lint.py` flags common rule breaks and names the rule for each.
 - **Pages check themselves.** The starter page includes `selfCheck()`, which flags overflow, overlapping labels and text that is too small, at any screen width. Add `#selfcheck` to the URL to outline the problems. `scripts/check_page.py` checks the page before you publish it.
@@ -112,6 +113,16 @@ codex plugin add llm-output-explainer@llm-output-explainer
 ```
 
 Start a new Codex conversation after installation. To install only the skill, copy `skills/explain/` to `~/.codex/skills/explain/`.
+
+Subagent delegation is automatic when the host exposes multi-agent tools and permits proactive delegation. The skill cannot enable or override that host policy itself. For an API-managed Codex session, enable [`multi_agent.enabled`](https://developers.openai.com/api/docs/guides/responses-multi-agent); the platform default is three concurrent subagents, while this skill normally uses two. Without that capability, the skill uses batched single-agent checks instead.
+
+## How it stays fast
+
+- The root keeps the prompt and main source, then gives every remaining source to one owner. Agents do not duplicate the same search.
+- Two read-only subagents are the default for multi-source work. Small or sequential tasks stay single-agent because orchestration would make them slower.
+- Subagents return compact ledger rows, not prose drafts. The root writes once and does not merge competing output files.
+- The root prepares the outline while evidence checks run, verifies decision-changing claims first, and stops research when every material claim has adequate evidence.
+- Only the selected format guide is loaded. Cheap local validators run directly on the frozen final draft instead of becoming another delegated task.
 
 In Claude Code:
 

@@ -1,7 +1,7 @@
 {
   "name": "llm-output-explainer",
-  "version": "0.2.0",
-  "description": "Explain code, papers, PRs and results in the format that is fastest to understand: controlled English (ASD-STE100 style), diagrams, interactive HTML pages, or narrated videos, with every claim checked against its source.",
+  "version": "0.3.0",
+  "description": "Explain code, papers, PRs and results in the format that is fastest to understand, with source-checked claims and parallel evidence gathering when subagents are available.",
   "author": {
     "name": "JohnQinAMD",
     "url": "https://github.com/JohnQinAMD"

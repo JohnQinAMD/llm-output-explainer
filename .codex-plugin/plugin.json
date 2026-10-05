@@ -1,7 +1,7 @@
 {
   "name": "llm-output-explainer",
-  "version": "0.2.0",
-  "description": "Explain code, papers, PRs and results in the format that is fastest to understand, with every claim checked against its source.",
+  "version": "0.3.0",
+  "description": "Explain code, papers, PRs and results with source-checked claims and parallel evidence gathering when subagents are available.",
   "author": {
     "name": "JohnQinAMD",
     "url": "https://github.com/JohnQinAMD"
@@ -21,7 +21,7 @@
   "interface": {
     "displayName": "LLM Output Explainer",
     "shortDescription": "Source-checked technical explanations",
-    "longDescription": "Explain code, papers, pull requests, and results with controlled English, diagrams, interactive HTML, or narrated video.",
+    "longDescription": "Explain code, papers, pull requests, and results with controlled English, diagrams, interactive HTML, or narrated video. Independent evidence streams run in parallel when the host provides subagents.",
     "developerName": "JohnQinAMD",
     "category": "Productivity",
     "capabilities": [
